@@ -64,3 +64,9 @@ async function seConnecter() {
   }
 }
 </script>
+<style scoped>
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  }
+ </style>
