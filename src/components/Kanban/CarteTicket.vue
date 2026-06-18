@@ -1,94 +1,82 @@
 <template>
-  <div class="carte-ticket" :class="ticket.priorite" @click="$emit('click')">
-    <div class="carte-entete">
-      <span class="reference">{{ ticket.reference }}</span>
-      <span class="badge-priorite" :class="ticket.priorite">{{ ticket.priorite }}</span>
+  <div :class="['carte', `priorite-${ticket.priorite}`, { 'alerte-critique': alerteCritique }]">
+    <div v-if="alerteCritique" class="bandeau-alerte">CRITIQUE — Non assigné depuis +15 min !</div>
+
+    <div class="carte-header">
+      <span class="reference">
+        {{ ticket.reference }}
+      </span>
+
+      <span :class="['badge', ticket.priorite]">
+        {{ ticket.priorite }}
+      </span>
     </div>
-    <h4 class="titre">{{ ticket.titre }}</h4>
-    <p class="client">{{ ticket.client_nom }}</p>
+
+    <h4>{{ ticket.titre }}</h4>
+
+    <p class="client">Client : {{ ticket.client_nom }}</p>
+
+    <p class="assigne">Assigné à : {{ ticket.assigne?.nom || "Non assigné" }}</p>
+
+    <div class="sla">Ouvert le : {{ formatDate(ticket.ouvert_le) }}</div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  ticket: {
-    type: Object,
-    required: true,
-  },
+import { computed } from "vue";
+
+const props = defineProps({ ticket: Object });
+
+// Detecter si le ticket est critique, non assigne et ouvert depuis +15min
+const alerteCritique = computed(() => {
+  if (props.ticket.priorite !== "critique") return false;
+  if (props.ticket.assigne_id) return false;
+
+  const ouverture = new Date(props.ticket.ouvert_le);
+  const maintenant = new Date();
+  const diffMin = (maintenant - ouverture) / 60000;
+
+  return diffMin > 15;
 });
 
-defineEmits(['click']);
+function formatDate(date) {
+  return new Date(date).toLocaleDateString("fr-FR");
+}
 </script>
 
 <style scoped>
-.carte-ticket {
-  background: #fff;
+.carte {
+  background: white;
   border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  border-left: 4px solid #9ca3af;
+  padding: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.1s ease;
+  margin-bottom: 8px;
 }
 
-.carte-ticket:hover {
-  transform: translateY(-2px);
+.priorite-critique {
+  border-left: 4px solid #dc2626;
 }
 
-.carte-ticket.critique {
-  border-left-color: #dc2626;
+.priorite-moyenne {
+  border-left: 4px solid #ea580c;
 }
 
-.carte-ticket.moyenne {
-  border-left-color: #f97316;
+.priorite-basse {
+  border-left: 4px solid #16a34a;
 }
 
-.carte-ticket.basse {
-  border-left-color: #16a34a;
+.badge.critique {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
-.carte-entete {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
+.badge.moyenne {
+  background: #ffedd5;
+  color: #ea580c;
 }
 
-.reference {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 600;
-}
-
-.badge-priorite {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 12px;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-.badge-priorite.critique {
-  background: #dc2626;
-}
-
-.badge-priorite.moyenne {
-  background: #f97316;
-}
-
-.badge-priorite.basse {
-  background: #16a34a;
-}
-
-.titre {
-  font-size: 0.9rem;
-  margin: 4px 0;
-}
-
-.client {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0;
+.badge.basse {
+  background: #dcfce7;
+  color: #16a34a;
 }
 </style>
