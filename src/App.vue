@@ -1,7 +1,6 @@
 <template>
   <div>
     <NavBar v-if="authStore.estConnecte" />
-
     <router-view />
   </div>
 </template>

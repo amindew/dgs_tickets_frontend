@@ -39,12 +39,23 @@
       {{ erreur }}
     </div>
 
-    <button
-      @click="soumettre"
-      :disabled="chargement"
-    >
-      {{ chargement ? 'Création...' : 'Créer le ticket' }}
-    </button>
+    <div class="actions">
+      <button
+        type="button"
+        class="btn-annuler"
+        @click="annuler"
+        :disabled="chargement"
+      >
+        Annuler
+      </button>
+      <button
+        class="btn-creer"
+        @click="soumettre"
+        :disabled="chargement"
+      >
+        {{ chargement ? 'Création...' : 'Créer le ticket' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -67,7 +78,6 @@ const form = ref({
 });
 
 async function soumettre() {
-  // Vérification du titre
   if (!form.value.titre) {
     erreur.value = 'Le titre est obligatoire';
     return;
@@ -77,8 +87,6 @@ async function soumettre() {
 
   try {
     await store.creerTicket(form.value);
-
-    // Redirection vers le tableau Kanban
     router.push('/kanban');
   } catch (e) {
     erreur.value = 'Erreur lors de la création';
@@ -86,7 +94,12 @@ async function soumettre() {
     chargement.value = false;
   }
 }
+
+function annuler() {
+  router.push('/kanban');
+}
 </script>
+
 <style scoped>
 .creation-ticket {
   max-width: 600px;
@@ -121,18 +134,35 @@ select {
   border-radius: 6px;
 }
 
-button {
-  width: 100%;
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actions button {
+  flex: 1;
   padding: 12px;
   border: none;
   border-radius: 6px;
-  background: #2563eb;
-  color: white;
   cursor: pointer;
 }
 
-button:hover {
+.btn-creer {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-creer:hover {
   background: #1d4ed8;
+}
+
+.btn-annuler {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-annuler:hover {
+  background: #d1d5db;
 }
 
 .erreur {
