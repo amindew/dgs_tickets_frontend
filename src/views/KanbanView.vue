@@ -40,6 +40,7 @@ function voirDetail(id) {
 
 onMounted(() => store.chargerTickets());
 </script>
+
 <style scoped>
 .colonnes {
   display: flex;

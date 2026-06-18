@@ -1,11 +1,15 @@
 <template>
-  <div class="carte-ticket" :class="ticket.priorite" @click="$emit('click')">
-    <div class="carte-entete">
+  <div :class="['carte', `priorite-${ticket.priorite}`]" @click="$emit('click')">
+    <div class="carte-header">
       <span class="reference">{{ ticket.reference }}</span>
-      <span class="badge-priorite" :class="ticket.priorite">{{ ticket.priorite }}</span>
+      <span :class="['badge', ticket.priorite]">{{ ticket.priorite }}</span>
     </div>
-    <h4 class="titre">{{ ticket.titre }}</h4>
-    <p class="client">{{ ticket.client_nom }}</p>
+
+    <h4>{{ ticket.titre }}</h4>
+
+    <p class="client">Client : {{ ticket.client_nom }}</p>
+    <p class="assigne">Assigné à : {{ ticket.assigne?.nom || 'Non assigné' }}</p>
+    <div class="sla">Ouvert le : {{ formatDate(ticket.ouvert_le) }}</div>
   </div>
 </template>
 
@@ -18,37 +22,40 @@ defineProps({
 });
 
 defineEmits(['click']);
+
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('fr-FR');
+}
 </script>
 
 <style scoped>
-.carte-ticket {
-  background: #fff;
+.carte {
+  background: white;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 8px;
   cursor: pointer;
-  border-left: 4px solid #9ca3af;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: transform 0.1s ease;
 }
 
-.carte-ticket:hover {
+.carte:hover {
   transform: translateY(-2px);
 }
 
-.carte-ticket.critique {
-  border-left-color: #dc2626;
+.priorite-critique {
+  border-left: 4px solid #dc2626;
 }
 
-.carte-ticket.moyenne {
-  border-left-color: #f97316;
+.priorite-moyenne {
+  border-left: 4px solid #ea580c;
 }
 
-.carte-ticket.basse {
-  border-left-color: #16a34a;
+.priorite-basse {
+  border-left: 4px solid #16a34a;
 }
 
-.carte-entete {
+.carte-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -61,34 +68,33 @@ defineEmits(['click']);
   font-weight: 600;
 }
 
-.badge-priorite {
+.badge {
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 12px;
   text-transform: uppercase;
-  color: #fff;
 }
 
-.badge-priorite.critique {
-  background: #dc2626;
+.badge.critique {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
-.badge-priorite.moyenne {
-  background: #f97316;
+.badge.moyenne {
+  background: #ffedd5;
+  color: #ea580c;
 }
 
-.badge-priorite.basse {
-  background: #16a34a;
+.badge.basse {
+  background: #dcfce7;
+  color: #16a34a;
 }
 
-.titre {
-  font-size: 0.9rem;
-  margin: 4px 0;
-}
-
-.client {
+.client,
+.assigne,
+.sla {
   font-size: 0.8rem;
   color: #6b7280;
-  margin: 0;
+  margin: 2px 0;
 }
 </style>
