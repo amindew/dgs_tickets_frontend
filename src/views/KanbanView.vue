@@ -66,7 +66,7 @@ const labelsStatut = {
   resolu: 'Résolu',
 };
 
-async function onDrop(event, nouveauStatut) {
+async function onChange(event, nouveauStatut) {
   if (!event.added) return;
 
   const ticket = event.added.element;
