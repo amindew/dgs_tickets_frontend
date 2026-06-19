@@ -27,5 +27,9 @@ export const useTicketsStore = defineStore('tickets', {
       await api.patch(`/tickets/${id}/statut`, { nouveau_statut });
       await this.chargerTickets();
     },
+    async assignerTicket(id, assigne_id) {
+  await api.patch(`/tickets/${id}/assignation`, { assigne_id });
+  await this.chargerTickets();
+},
   }
 });

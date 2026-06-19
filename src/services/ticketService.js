@@ -36,4 +36,16 @@ export const ticketService = {
     const res = await api.patch(`/tickets/${id}/assignation`, { assigne_id });
     return res.data.data;
   },
+  // Ajouter dans l objet ticketService existant :
+async getCommentaires(ticketId) {
+  const res = await api.get(`/tickets/${ticketId}/commentaires`);
+  return res.data.data;
+},
+async ajouterCommentaire(ticketId, contenu) {
+  const res = await api.post(
+    `/tickets/${ticketId}/commentaires`,
+    { contenu }
+  );
+  return res.data.data;
+}
 };

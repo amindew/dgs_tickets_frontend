@@ -169,3 +169,14 @@ onMounted(async () => {
   color: gray;
 }
 </style>
+<template>
+  <!-- ... reste de la page ... -->
+
+  <FilCommentaires :ticket-id="ticket.id" />
+</template>
+
+<script setup>
+import FilCommentaires from '../components/tickets/FilCommentaires.vue';
+
+// ... reste des imports ...
+</script>
