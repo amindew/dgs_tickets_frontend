@@ -20,7 +20,7 @@
           :list="tickets"
           group="tickets"
           item-key="id"
-          @end="onDrop($event, statut)"
+          @change="onChange($event, statut)"
           class="zone-depot"
         >
           <template #item="{ element }">
