@@ -1,4 +1,4 @@
-﻿<template>
+﻿<<template>
   <div class="carte-ticket" :class="ticket.priorite" @click="$emit('click')">
     <div class="carte-entete">
       <span class="reference">{{ ticket.reference }}</span>
