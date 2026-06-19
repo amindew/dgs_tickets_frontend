@@ -19,7 +19,7 @@
           :list="tickets"
           group="tickets"
           item-key="id"
-          @end="onDrop($event, statut)"
+          @change="onChange($event, statut)"
           class="zone-depot"
         >
           <template #item="{ element }">
@@ -61,7 +61,7 @@ const labelsStatut = {
 };
 
 // Déclenché quand une carte est déposée dans une nouvelle colonne
-async function onDrop(event, nouveauStatut) {
+async function onChange(event, nouveauStatut) {
   // Si la carte est déposée dans la même colonne, rien à faire
   if (!event.added) return;
 

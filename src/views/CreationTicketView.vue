@@ -4,18 +4,12 @@
 
     <div class="champ">
       <label>Titre *</label>
-      <input
-        v-model="form.titre"
-        placeholder="Résumé de l'incident"
-      />
+      <input v-model="form.titre" placeholder="Résumé de l'incident" />
     </div>
 
     <div class="champ">
       <label>Description</label>
-      <textarea
-        v-model="form.description"
-        rows="4"
-      ></textarea>
+      <textarea v-model="form.description" rows="4"></textarea>
     </div>
 
     <div class="champ">
@@ -28,10 +22,26 @@
     </div>
 
     <div class="champ">
-      <label>Client</label>
+      <label>Client *</label>
+      <input v-model="form.client_nom" placeholder="Nom du client" />
+    </div>
+
+    <!-- ✅ Email NON obligatoire -->
+    <div class="champ">
+      <label>Email client</label>
       <input
-        v-model="form.client_nom"
-        placeholder="Nom du client"
+        type="email"
+        v-model="form.client_email"
+        placeholder="Optionnel"
+      />
+    </div>
+
+    <div class="champ">
+      <label>Téléphone client *</label>
+      <input
+        type="tel"
+        v-model="form.client_telephone"
+        placeholder="771234567"
       />
     </div>
 
@@ -48,6 +58,7 @@
       >
         Annuler
       </button>
+
       <button
         class="btn-creer"
         @click="soumettre"
@@ -74,30 +85,57 @@ const form = ref({
   titre: '',
   description: '',
   priorite: 'moyenne',
-  client_nom: ''
+  client_nom: '',
+  client_email: '',
+  client_telephone: ''
 });
 
-async function soumettre() {
-  if (!form.value.titre) {
-    erreur.value = 'Le titre est obligatoire';
+const soumettre = async () => {
+  erreur.value = '';
+
+  //  Champs obligatoires
+  if (!form.value.titre || !form.value.client_nom || !form.value.client_telephone) {
+    erreur.value = 'Tous les champs marqués * sont obligatoires';
     return;
+  }
+
+  // Validation téléphone Sénégal
+  const phoneRegex = /^(77|76|78|70|75)[0-9]{7}$/;
+  if (!phoneRegex.test(form.value.client_telephone)) {
+    erreur.value = 'Numéro invalide (ex: 771234567)';
+    return;
+  }
+
+  //  Email optionnel mais valide si rempli
+  if (form.value.client_email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.value.client_email)) {
+      erreur.value = 'Email invalide';
+      return;
+    }
   }
 
   chargement.value = true;
 
   try {
-    await store.creerTicket(form.value);
+    // envoyer null si email vide
+    const data = {
+      ...form.value,
+      client_email: form.value.client_email || null
+    };
+
+    await store.creerTicket(data);
     router.push('/kanban');
   } catch (e) {
-    erreur.value = 'Erreur lors de la création';
+    erreur.value = 'Erreur lors de la création du ticket';
   } finally {
     chargement.value = false;
   }
-}
+};
 
-function annuler() {
+const annuler = () => {
   router.push('/kanban');
-}
+};
 </script>
 
 <style scoped>
