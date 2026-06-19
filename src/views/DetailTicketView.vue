@@ -1,13 +1,27 @@
 <template>
-  <div class="detail-ticket" v-if="ticket">
+  <div
+    class="detail-ticket"
+    v-if="ticket"
+  >
     <div class="entete">
-      <span class="reference">{{ ticket.reference }}</span>
-      <span :class="['badge', ticket.priorite]">{{ ticket.priorite }}</span>
-      <span :class="['statut', ticket.statut]">{{ ticket.statut }}</span>
+      <span class="reference">
+        {{ ticket.reference }}
+      </span>
+
+      <span :class="['badge', ticket.priorite]">
+        {{ ticket.priorite }}
+      </span>
+
+      <span :class="['statut', ticket.statut]">
+        {{ ticket.statut }}
+      </span>
     </div>
 
     <h2>{{ ticket.titre }}</h2>
-    <p class="description">{{ ticket.description }}</p>
+
+    <p class="description">
+      {{ ticket.description }}
+    </p>
 
     <div class="infos-grid">
       <div>
@@ -32,21 +46,33 @@
     </div>
 
     <!-- SLA -->
-    <div class="sla-block" :class="{ depasse: slaDepasse }">
+    <div
+      class="sla-block"
+      :class="{ depasse: slaDepasse }"
+    >
       <h3>Indicateur SLA</h3>
-      <p>Durée écoulée : {{ dureeEcouleeMin }} minutes</p>
+
+      <p>
+        Durée écoulée : {{ dureeEcouleeMin }} minutes
+      </p>
 
       <p v-if="ticket.resolu_le">
         Résolu en : {{ ticket.duree_resolution_min }} minutes
       </p>
 
-      <p v-else class="en-cours-sla">
+      <p
+        v-else
+        class="en-cours-sla"
+      >
         Ticket en cours de traitement
       </p>
     </div>
 
     <!-- TIMELINE HISTORIQUE -->
-    <div class="timeline" v-if="historique.length">
+    <div
+      class="timeline"
+      v-if="historique.length"
+    >
       <h3>Historique des statuts</h3>
 
       <div
@@ -59,27 +85,37 @@
         <div class="content">
           <p class="statut-change">
             <strong>{{ h.ancien_statut }}</strong>
-            → <strong>{{ h.nouveau_statut }}</strong>
+            →
+            <strong>{{ h.nouveau_statut }}</strong>
           </p>
 
           <p class="meta">
-            Par <strong>{{ h.modificateur?.nom || 'Inconnu' }}</strong>
+            Par
+            <strong>{{ h.modificateur?.nom || 'Inconnu' }}</strong>
             • {{ formatDate(h.modifie_le) }}
           </p>
         </div>
       </div>
     </div>
 
-    <button @click="$router.back()">Retour</button>
+    <!-- FIL DE COMMENTAIRES -->
+    <FilCommentaires :ticket-id="ticket.id" />
+
+    <button @click="$router.back()">
+      Retour
+    </button>
   </div>
 
-  <div v-else>Chargement...</div>
+  <div v-else>
+    Chargement...
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { ticketService } from '../services/ticketService';
+import FilCommentaires from '../components/tickets/FilCommentaires.vue';
 
 const route = useRoute();
 
@@ -90,6 +126,7 @@ const dureeEcouleeMin = computed(() => {
   if (!ticket.value) return 0;
 
   const debut = new Date(ticket.value.ouvert_le);
+
   const fin = ticket.value.resolu_le
     ? new Date(ticket.value.resolu_le)
     : new Date();
@@ -169,14 +206,3 @@ onMounted(async () => {
   color: gray;
 }
 </style>
-<template>
-  <!-- ... reste de la page ... -->
-
-  <FilCommentaires :ticket-id="ticket.id" />
-</template>
-
-<script setup>
-import FilCommentaires from '../components/tickets/FilCommentaires.vue';
-
-// ... reste des imports ...
-</script>
