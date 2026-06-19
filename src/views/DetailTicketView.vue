@@ -1,112 +1,90 @@
 <template>
-  <div
-    class="detail-ticket"
-    v-if="ticket"
-  >
-    <div class="entete">
-      <span class="reference">
-        {{ ticket.reference }}
-      </span>
+  <div class="page" v-if="ticket">
+    <div class="detail-ticket">
+      <button class="btn-retour" @click="$router.back()">← Retour</button>
 
-      <span :class="['badge', ticket.priorite]">
-        {{ ticket.priorite }}
-      </span>
+      <div class="card-surface bloc-principal">
+        <div class="entete">
+          <span class="reference mono">{{ ticket.reference }}</span>
+          <span :class="['tag', ticket.priorite]">{{ ticket.priorite }}</span>
+          <span :class="['tag', ticket.statut]">{{ labelsStatut[ticket.statut] }}</span>
+        </div>
 
-      <span :class="['statut', ticket.statut]">
-        {{ ticket.statut }}
-      </span>
-    </div>
+        <h2>{{ ticket.titre }}</h2>
 
-    <h2>{{ ticket.titre }}</h2>
+        <p class="description">{{ ticket.description || 'Aucune description fournie.' }}</p>
 
-    <p class="description">
-      {{ ticket.description }}
-    </p>
+        <div class="infos-grid">
+          <div>
+            <label>Client</label>
+            <p>{{ ticket.client_nom }}</p>
+          </div>
 
-    <div class="infos-grid">
-      <div>
-        <label>Client</label>
-        <p>{{ ticket.client_nom }}</p>
-      </div>
+          <div>
+            <label>Assigné à</label>
+            <p>{{ ticket.assigne?.nom || 'Non assigné' }}</p>
+          </div>
 
-      <div>
-        <label>Assigné à</label>
-        <p>{{ ticket.assigne?.nom || 'Non assigné' }}</p>
-      </div>
+          <div>
+            <label>Créé par</label>
+            <p>{{ ticket.createur?.nom }}</p>
+          </div>
 
-      <div>
-        <label>Créé par</label>
-        <p>{{ ticket.createur?.nom }}</p>
-      </div>
-
-      <div>
-        <label>Ouvert le</label>
-        <p>{{ formatDate(ticket.ouvert_le) }}</p>
-      </div>
-    </div>
-
-    <!-- SLA -->
-    <div
-      class="sla-block"
-      :class="{ depasse: slaDepasse }"
-    >
-      <h3>Indicateur SLA</h3>
-
-      <p>
-        Durée écoulée : {{ dureeEcouleeMin }} minutes
-      </p>
-
-      <p v-if="ticket.resolu_le">
-        Résolu en : {{ ticket.duree_resolution_min }} minutes
-      </p>
-
-      <p
-        v-else
-        class="en-cours-sla"
-      >
-        Ticket en cours de traitement
-      </p>
-    </div>
-
-    <!-- TIMELINE HISTORIQUE -->
-    <div
-      class="timeline"
-      v-if="historique.length"
-    >
-      <h3>Historique des statuts</h3>
-
-      <div
-        class="timeline-item"
-        v-for="h in historique"
-        :key="h.id"
-      >
-        <div class="circle"></div>
-
-        <div class="content">
-          <p class="statut-change">
-            <strong>{{ h.ancien_statut }}</strong>
-            →
-            <strong>{{ h.nouveau_statut }}</strong>
-          </p>
-
-          <p class="meta">
-            Par
-            <strong>{{ h.modificateur?.nom || 'Inconnu' }}</strong>
-            • {{ formatDate(h.modifie_le) }}
-          </p>
+          <div>
+            <label>Ouvert le</label>
+            <p class="mono small">{{ formatDate(ticket.ouvert_le) }}</p>
+          </div>
         </div>
       </div>
+
+      <div class="card-surface sla-block" :class="{ depasse: slaDepasse }">
+        <div class="sla-header">
+          <h3>Indicateur SLA</h3>
+          <span class="sla-pastille" :class="{ depasse: slaDepasse }">
+            {{ slaDepasse ? 'Délai dépassé' : 'Dans les délais' }}
+          </span>
+        </div>
+
+        <p class="sla-duree mono">{{ dureeEcouleeMin }} min</p>
+
+        <p v-if="ticket.resolu_le" class="sla-detail">
+          Résolu en {{ ticket.duree_resolution_min }} minutes
+        </p>
+        <p v-else class="sla-detail en-cours-sla">
+          Ticket en cours de traitement
+        </p>
+      </div>
+
+      <div class="card-surface timeline-block" v-if="historique.length">
+        <h3>Historique des statuts</h3>
+
+        <div class="timeline">
+          <div class="timeline-item" v-for="h in historique" :key="h.id">
+            <div class="circle"></div>
+
+            <div class="content">
+              <p class="statut-change">
+                <span :class="['tag', h.ancien_statut]">{{ labelsStatut[h.ancien_statut] }}</span>
+                →
+                <span :class="['tag', h.nouveau_statut]">{{ labelsStatut[h.nouveau_statut] }}</span>
+              </p>
+
+              <p class="meta">
+                Par <strong>{{ h.modificateur?.nom || 'Inconnu' }}</strong>
+                <span class="mono"> · {{ formatDate(h.modifie_le) }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-surface commentaires-block">
+        <FilCommentaires :ticket-id="ticket.id" />
+      </div>
     </div>
-
-    <!-- FIL DE COMMENTAIRES -->
-    <FilCommentaires :ticket-id="ticket.id" />
-
-    <button @click="$router.back()">
-      Retour
-    </button>
   </div>
 
-  <div v-else>
+  <div v-else class="chargement-page">
     Chargement...
   </div>
 </template>
@@ -121,6 +99,13 @@ const route = useRoute();
 
 const ticket = ref(null);
 const historique = ref([]);
+
+const labelsStatut = {
+  a_faire: 'À faire',
+  en_cours: 'En cours',
+  bloque: 'Bloqué',
+  resolu: 'Résolu',
+};
 
 const dureeEcouleeMin = computed(() => {
   if (!ticket.value) return 0;
@@ -147,62 +132,206 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.page {
+  padding: 28px 20px 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.chargement-page {
+  text-align: center;
+  padding: 60px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+
+.detail-ticket {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-retour {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.btn-retour:hover {
+  color: var(--ink);
+}
+
+.bloc-principal {
+  padding: 26px 28px;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.reference {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.description {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.infos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.infos-grid label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9aa1ad;
+  margin-bottom: 3px;
+}
+
+.infos-grid p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.small { font-size: 12.5px; }
+
+/* SLA */
 .sla-block {
-  padding: 12px;
-  border-radius: 8px;
-  background: #f0fdf4;
+  padding: 20px 24px;
+  border-left: 4px solid var(--success);
 }
 
 .sla-block.depasse {
-  background: #fef2f2;
-  border: 1px solid #dc2626;
+  border-left-color: var(--danger);
+}
+
+.sla-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sla-header h3 { font-size: 14px; }
+
+.sla-pastille {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.sla-pastille.depasse {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.sla-duree {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 10px 0 4px;
+}
+
+.sla-detail {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 0;
 }
 
 /* TIMELINE */
-.timeline {
-  margin-top: 25px;
-  padding: 10px;
+.timeline-block {
+  padding: 22px 24px;
+}
+
+.timeline-block h3 {
+  font-size: 14px;
+  margin-bottom: 16px;
 }
 
 .timeline-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
   position: relative;
 }
 
-.circle {
-  width: 10px;
-  height: 10px;
-  background: #4f46e5;
-  border-radius: 50%;
-  margin-right: 10px;
-  margin-top: 6px;
+.timeline-item:last-child {
+  margin-bottom: 0;
 }
 
-.timeline-item::before {
+.circle {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin-right: 12px;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.timeline-item:not(:last-child)::before {
   content: '';
   position: absolute;
   left: 4px;
-  top: 10px;
-  bottom: -10px;
-  width: 2px;
-  background: #e5e7eb;
+  top: 12px;
+  bottom: -14px;
+  width: 1.5px;
+  background: var(--border);
 }
 
 .content {
-  background: #f9fafb;
-  padding: 8px 12px;
-  border-radius: 6px;
+  background: var(--bg);
+  padding: 9px 13px;
+  border-radius: var(--radius-sm);
   width: 100%;
 }
 
 .statut-change {
-  margin: 0;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
 }
 
 .meta {
-  font-size: 12px;
-  color: gray;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.commentaires-block {
+  padding: 22px 24px;
 }
 </style>
