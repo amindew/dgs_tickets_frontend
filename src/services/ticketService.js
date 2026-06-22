@@ -1,9 +1,9 @@
-import api from './api';
+import api from "./api";
 
 export const ticketService = {
   // Recuperer tous les tickets groupes par statut
   async getTous() {
-    const res = await api.get('/tickets');
+    const res = await api.get("/tickets");
     return res.data.data;
   },
 
@@ -21,7 +21,7 @@ export const ticketService = {
 
   // Creer un ticket
   async creer(data) {
-    const res = await api.post('/tickets', data);
+    const res = await api.post("/tickets", data);
     return res.data.data;
   },
 
@@ -37,15 +37,25 @@ export const ticketService = {
     return res.data.data;
   },
   // Ajouter dans l objet ticketService existant :
-async getCommentaires(ticketId) {
-  const res = await api.get(`/tickets/${ticketId}/commentaires`);
-  return res.data.data;
-},
-async ajouterCommentaire(ticketId, contenu) {
-  const res = await api.post(
-    `/tickets/${ticketId}/commentaires`,
-    { contenu }
-  );
-  return res.data.data;
-}
+  async getCommentaires(ticketId) {
+    const res = await api.get(`/tickets/${ticketId}/commentaires`);
+    return res.data.data;
+  },
+  async ajouterCommentaire(ticketId, contenu) {
+    const res = await api.post(`/tickets/${ticketId}/commentaires`, { contenu });
+    return res.data.data;
+  },
+  // Ajouter dans l objet ticketService :
+  async getPieces(ticketId) {
+    const res = await api.get(`/tickets/${ticketId}/pieces`);
+    return res.data.data;
+  },
+  async uploaderFichier(ticketId, fichier) {
+    const formData = new FormData();
+    formData.append("fichier", fichier);
+    const res = await api.post(`/tickets/${ticketId}/pieces`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.data;
+  },
 };

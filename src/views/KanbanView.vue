@@ -1,10 +1,15 @@
 <template>
   <div class="kanban">
+     <BarreFiltres @filtrer="appliquerFiltres" /> 
+
     <div v-if="store.chargement">
       Chargement...
     </div>
 
-    <div v-else class="colonnes">
+    <div
+      v-else
+      class="colonnes"
+    >
       <div
         class="colonne"
         v-for="(tickets, statut) in store.tickets"
@@ -12,7 +17,10 @@
       >
         <div class="colonne-header">
           <h3>{{ labelsStatut[statut] }}</h3>
-          <span class="compteur">{{ tickets.length }}</span>
+
+          <span class="compteur">
+            {{ tickets.length }}
+          </span>
         </div>
 
         <draggable
@@ -45,8 +53,11 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import draggable from 'vuedraggable';
+
 import { useTicketsStore } from '../stores/tickets';
+
 import CarteTicket from '../components/kanban/CarteTicket.vue';
+import BarreFiltres from '../components/kanban/BarreFiltres.vue';
 
 const store = useTicketsStore();
 const router = useRouter();
@@ -57,27 +68,31 @@ const labelsStatut = {
   a_faire: 'A faire',
   en_cours: 'En cours',
   bloque: 'Bloque',
-  resolu: 'Resolu',
+  resolu: 'Resolu'
 };
 
-// Déclenché quand une carte est déposée dans une nouvelle colonne
+function appliquerFiltres(filtres) {
+  store.chargerTickets(filtres);
+}
+
+// Déclenché lorsqu'une carte est déplacée
 async function onChange(event, nouveauStatut) {
-  // Si la carte est déposée dans la même colonne, rien à faire
   if (!event.added) return;
 
   const ticket = event.added.element;
+
   erreurTransition.value = '';
 
   try {
-    // Appel API pour changer le statut (RG-02)
-    await store.changerStatut(ticket.id, nouveauStatut);
+    await store.changerStatut(
+      ticket.id,
+      nouveauStatut
+    );
   } catch (error) {
-    // Si transition interdite : afficher l'erreur et recharger
     erreurTransition.value =
       error.response?.data?.message ||
       'Transition non autorisee';
 
-    // Recharger pour remettre la carte à sa place d'origine
     await store.chargerTickets();
   }
 }

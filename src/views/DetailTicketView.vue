@@ -68,7 +68,7 @@
       </p>
     </div>
 
-    <!-- TIMELINE HISTORIQUE -->
+    <!-- Historique -->
     <div
       class="timeline"
       v-if="historique.length"
@@ -98,8 +98,11 @@
       </div>
     </div>
 
-    <!-- FIL DE COMMENTAIRES -->
+    <!-- Fil de commentaires -->
     <FilCommentaires :ticket-id="ticket.id" />
+
+    <!-- Pièces jointes -->
+    <ZoneUpload :ticket-id="ticket.id" />
 
     <button @click="$router.back()">
       Retour
@@ -115,7 +118,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { ticketService } from '../services/ticketService';
+
 import FilCommentaires from '../components/tickets/FilCommentaires.vue';
+import ZoneUpload from '../components/tickets/ZoneUpload.vue';
 
 const route = useRoute();
 
@@ -134,7 +139,9 @@ const dureeEcouleeMin = computed(() => {
   return Math.round((fin - debut) / 60000);
 });
 
-const slaDepasse = computed(() => dureeEcouleeMin.value > 120);
+const slaDepasse = computed(() => {
+  return dureeEcouleeMin.value > 120;
+});
 
 function formatDate(date) {
   return new Date(date).toLocaleString('fr-FR');
@@ -151,6 +158,7 @@ onMounted(async () => {
   padding: 12px;
   border-radius: 8px;
   background: #f0fdf4;
+  margin: 20px 0;
 }
 
 .sla-block.depasse {
