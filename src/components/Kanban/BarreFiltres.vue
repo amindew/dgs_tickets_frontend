@@ -30,19 +30,25 @@
       @input="emettreFiltresDebounce"
     />
 
-    <!-- DATE DÉBUT -->
-    <input
-      type="date"
-      v-model="filtres.date_debut"
-      @change="emettreFiltres"
-    />
+   <!-- DATE DÉBUT -->
+<div class="filtre-date">
+  <label>Date début</label>
+  <input
+    type="date"
+    v-model="filtres.date_debut"
+    @change="emettreFiltres"
+  />
+</div>
 
-    <!--  DATE FIN -->
-    <input
-      type="date"
-      v-model="filtres.date_fin"
-      @change="emettreFiltres"
-    />
+<!-- DATE FIN -->
+<div class="filtre-date">
+  <label>Date fin</label>
+  <input
+    type="date"
+    v-model="filtres.date_fin"
+    @change="emettreFiltres"
+  />
+</div>
 
     <!-- RESET -->
     <button @click="reinitialiser" class="btn-reset">
