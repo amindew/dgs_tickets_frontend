@@ -94,8 +94,8 @@ import { useRouter } from 'vue-router';
 import draggable from 'vuedraggable';
 
 import { useTicketsStore } from '../stores/tickets';
-import CarteTicket from '../components/kanban/CarteTicket.vue';
-import BarreFiltres from '../components/kanban/BarreFiltres.vue';
+import CarteTicket from '../components/Kanban/CarteTicket.vue';
+import BarreFiltres from '../components/Kanban/BarreFiltres.vue';
 
 const store = useTicketsStore();
 const router = useRouter();
