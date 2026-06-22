@@ -1,33 +1,17 @@
 <template>
   <div class="barre-filtres">
-    <select
-      v-model="filtres.priorite"
-      @change="emettreFiltres"
-    >
-      <option value="">
-        Toutes priorités
-      </option>
 
-      <option value="critique">
-        Critique
-      </option>
-
-      <option value="moyenne">
-        Moyenne
-      </option>
-
-      <option value="basse">
-        Basse
-      </option>
+    <!-- PRIORITÉ -->
+    <select v-model="filtres.priorite" @change="emettreFiltres">
+      <option value="">Toutes priorités</option>
+      <option value="critique">Critique</option>
+      <option value="moyenne">Moyenne</option>
+      <option value="basse">Basse</option>
     </select>
 
-    <select
-      v-model="filtres.agent"
-      @change="emettreFiltres"
-    >
-      <option value="">
-        Tous les techniciens
-      </option>
+    <!-- TECHNICIEN -->
+    <select v-model="filtres.agent" @change="emettreFiltres">
+      <option value="">Tous les techniciens</option>
 
       <option
         v-for="tech in techniciens"
@@ -38,6 +22,7 @@
       </option>
     </select>
 
+    <!-- CLIENT -->
     <input
       type="text"
       v-model="filtres.client"
@@ -45,12 +30,25 @@
       @input="emettreFiltresDebounce"
     />
 
-    <button
-      @click="reinitialiser"
-      class="btn-reset"
-    >
+    <!-- DATE DÉBUT -->
+    <input
+      type="date"
+      v-model="filtres.date_debut"
+      @change="emettreFiltres"
+    />
+
+    <!--  DATE FIN -->
+    <input
+      type="date"
+      v-model="filtres.date_fin"
+      @change="emettreFiltres"
+    />
+
+    <!-- RESET -->
+    <button @click="reinitialiser" class="btn-reset">
       Réinitialiser
     </button>
+
   </div>
 </template>
 
@@ -65,43 +63,54 @@ const techniciens = ref([]);
 const filtres = ref({
   priorite: '',
   agent: '',
-  client: ''
+  client: '',
+  date_debut: '',
+  date_fin: ''
 });
 
 let timeoutId = null;
 
+/* envoi filtres */
 function emettreFiltres() {
   emit('filtrer', { ...filtres.value });
 }
 
-// Debounce : attendre 400 ms après la dernière frappe
+/* debounce recherche client */
 function emettreFiltresDebounce() {
   clearTimeout(timeoutId);
-
   timeoutId = setTimeout(() => {
     emettreFiltres();
   }, 400);
 }
 
+/* reset filtres */
 function reinitialiser() {
   filtres.value = {
     priorite: '',
     agent: '',
-    client: ''
+    client: '',
+    date_debut: '',
+    date_fin: ''
   };
 
   emettreFiltres();
 }
 
+/* charger techniciens */
 onMounted(async () => {
-  const res = await api.get('/users?role=technicien');
-  techniciens.value = res.data.data;
+  try {
+    const res = await api.get('/users?role=technicien');
+    techniciens.value = res.data.data;
+  } catch (e) {
+    console.error('Erreur chargement techniciens', e);
+  }
 });
 </script>
 
 <style scoped>
 .barre-filtres {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   padding: 12px 20px;
   background: white;
@@ -113,6 +122,7 @@ onMounted(async () => {
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
+  font-size: 13px;
 }
 
 .btn-reset {
@@ -121,5 +131,9 @@ onMounted(async () => {
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.btn-reset:hover {
+  background: #e2e8f0;
 }
 </style>
