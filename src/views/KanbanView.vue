@@ -1,6 +1,19 @@
 <template>
   <div class="kanban-page">
-    <BarreFiltres @filtrer="appliquerFiltres" />
+
+  <div class="toolbar">
+  <button
+    class="btn-filtres"
+    @click="afficherFiltres = !afficherFiltres"
+  >
+    {{ afficherFiltres ? 'Masquer les filtres' : 'Afficher les filtres' }}
+  </button>
+</div>
+
+<BarreFiltres
+  v-if="afficherFiltres"
+  @filtrer="appliquerFiltres"
+/>
 
     <div v-if="store.chargement" class="chargement">
       <span class="chargement-dot"></span>
@@ -95,11 +108,13 @@ import draggable from 'vuedraggable';
 
 import { useTicketsStore } from '../stores/tickets';
 import CarteTicket from '../components/Kanban/CarteTicket.vue';
-import BarreFiltres from '../components/Kanban/BarreFiltres.vue'; 
+import BarreFiltres from '../components/Kanban/BarreFiltres.vue';
 
 const store = useTicketsStore();
 const router = useRouter();
 const erreurTransition = ref('');
+const afficherFiltres = ref(false);
+
 let erreurTimer = null;
 
 const labelsStatut = {
@@ -414,4 +429,22 @@ onMounted(async () => {
 .toast-leave-active { transition: all 0.25s ease; }
 .toast-enter-from,
 .toast-leave-to { opacity: 0; transform: translateY(8px); }
+.toolbar {
+  margin-bottom: 15px;
+}
+
+.btn-filtres {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-filtres:hover {
+  background: #1d4ed8;
+}
 </style>
