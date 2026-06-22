@@ -1,6 +1,18 @@
 <template>
   <div class="kanban">
-    <BarreFiltres @filtrer="appliquerFiltres" />
+   <div class="toolbar">
+  <button
+    class="btn-filtres"
+    @click="afficherFiltres = !afficherFiltres"
+  >
+    {{ afficherFiltres ? 'Masquer les filtres' : 'Afficher les filtres' }}
+  </button>
+</div>
+
+<BarreFiltres
+  v-if="afficherFiltres"
+  @filtrer="appliquerFiltres"
+/>
 
     <div v-if="store.chargement">
       Chargement...
@@ -63,6 +75,7 @@ const store = useTicketsStore();
 const router = useRouter();
 
 const erreurTransition = ref('');
+const afficherFiltres = ref(false);
 
 const labelsStatut = {
   a_faire: 'À faire',
@@ -160,5 +173,22 @@ onMounted(async () => {
   padding: 12px;
   border-radius: 8px;
   max-width: 300px;
+}
+.toolbar {
+  margin-bottom: 16px;
+}
+
+.btn-filtres {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-filtres:hover {
+  opacity: 0.9;
 }
 </style>
