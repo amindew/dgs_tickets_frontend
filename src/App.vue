@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="app-shell">
     <NavBar v-if="authStore.estConnecte" />
     <router-view />
   </div>
@@ -11,3 +11,10 @@ import { useAuthStore } from './stores/auth';
 
 const authStore = useAuthStore();
 </script>
+
+<style>
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg);
+}
+</style>

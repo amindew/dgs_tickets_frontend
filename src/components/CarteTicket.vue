@@ -1,94 +1,142 @@
-<<template>
-  <div class="carte-ticket" :class="ticket.priorite" @click="$emit('click')">
-    <div class="carte-entete">
-      <span class="reference">{{ ticket.reference }}</span>
-      <span class="badge-priorite" :class="ticket.priorite">{{ ticket.priorite }}</span>
+<template>
+  <div :class="['carte', `priorite-${ticket.priorite}`]">
+    <div class="carte-header">
+      <span class="reference mono">{{ ticket.reference }}</span>
+      <span :class="['tag', ticket.priorite]">{{ ticket.priorite }}</span>
     </div>
-    <h4 class="titre">{{ ticket.titre }}</h4>
-    <p class="client">{{ ticket.client_nom }}</p>
+
+    <div class="perforation" aria-hidden="true"></div>
+
+    <h4>{{ ticket.titre }}</h4>
+
+    <div class="assignation-rapide" v-if="peutAssigner">
+      <select
+        v-if="!ticket.assigne_id"
+        @change="assignerRapide($event.target.value)"
+        @click.stop
+      >
+        <option value="">Assigner à...</option>
+        <option v-for="tech in techniciens" :key="tech.id" :value="tech.id">
+          {{ tech.nom }}
+        </option>
+      </select>
+
+      <span v-else class="assigne-label">
+        <span class="avatar">{{ initiale(ticket.assigne?.nom) }}</span>
+        {{ ticket.assigne?.nom }}
+      </span>
+    </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  ticket: {
-    type: Object,
-    required: true,
-  },
+import { computed } from 'vue';
+import { useAuthStore } from '../../stores/auth';
+import { useTicketsStore } from '../../stores/tickets';
+
+const props = defineProps({
+  ticket: Object,
+  techniciens: Array,
 });
 
-defineEmits(['click']);
+const authStore = useAuthStore();
+const ticketsStore = useTicketsStore();
+
+const peutAssigner = computed(() =>
+  authStore.estAdmin || authStore.estResponsable
+);
+
+function initiale(nom) {
+  return nom ? nom.trim().charAt(0).toUpperCase() : '?';
+}
+
+async function assignerRapide(assigneId) {
+  if (!assigneId) return;
+
+  await ticketsStore.assignerTicket(
+    props.ticket.id,
+    assigneId
+  );
+}
 </script>
 
 <style scoped>
-.carte-ticket {
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  border-left: 4px solid #9ca3af;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.1s ease;
+.carte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 14px 12px;
+  margin-bottom: 10px;
+  cursor: grab;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  border-left: 4px solid var(--border-strong);
 }
 
-.carte-ticket:hover {
-  transform: translateY(-2px);
+.carte:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
-.carte-ticket.critique {
-  border-left-color: #dc2626;
-}
+.priorite-critique { border-left-color: var(--danger); }
+.priorite-moyenne { border-left-color: var(--warning); }
+.priorite-basse { border-left-color: var(--success); }
 
-.carte-ticket.moyenne {
-  border-left-color: #f97316;
-}
-
-.carte-ticket.basse {
-  border-left-color: #16a34a;
-}
-
-.carte-entete {
+.carte-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
 }
 
 .reference {
-  font-size: 0.75rem;
-  color: #6b7280;
+  font-size: 11px;
   font-weight: 600;
+  color: var(--ink-soft);
 }
 
-.badge-priorite {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 12px;
-  text-transform: uppercase;
+.perforation {
+  border-top: 1.5px dashed var(--border);
+  margin: 10px 0;
+}
+
+h4 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 8px;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.assignation-rapide select {
+  width: 100%;
+  font-size: 12.5px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  color: var(--ink-soft);
+  background: var(--bg);
+}
+
+.assigne-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--navy-soft);
   color: #fff;
-}
-
-.badge-priorite.critique {
-  background: #dc2626;
-}
-
-.badge-priorite.moyenne {
-  background: #f97316;
-}
-
-.badge-priorite.basse {
-  background: #16a34a;
-}
-
-.titre {
-  font-size: 0.9rem;
-  margin: 4px 0;
-}
-
-.client {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
 }
 </style>

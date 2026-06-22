@@ -1,71 +1,58 @@
 <template>
-  <div class="creation-ticket">
-    <h2>Nouveau ticket d'incident</h2>
+  <div class="page">
+    <div class="creation-ticket card-surface">
+      <div class="entete-form">
+        <span class="eyebrow mono">Nouveau signalement</span>
+        <h2>Nouveau ticket d'incident</h2>
+      </div>
 
-    <div class="champ">
-      <label>Titre *</label>
-      <input v-model="form.titre" placeholder="Résumé de l'incident" />
-    </div>
+      <div class="champ">
+        <label>Titre *</label>
+        <input v-model="form.titre" placeholder="Résumé de l'incident" />
+      </div>
 
-    <div class="champ">
-      <label>Description</label>
-      <textarea v-model="form.description" rows="4"></textarea>
-    </div>
+      <div class="champ">
+        <label>Description</label>
+        <textarea v-model="form.description" rows="4" placeholder="Détails utiles à la résolution..."></textarea>
+      </div>
 
-    <div class="champ">
-      <label>Priorité *</label>
-      <select v-model="form.priorite">
-        <option value="basse">Basse</option>
-        <option value="moyenne">Moyenne</option>
-        <option value="critique">Critique</option>
-      </select>
-    </div>
+      <div class="champ">
+        <label>Priorité *</label>
+        <select v-model="form.priorite">
+          <option value="basse">Basse</option>
+          <option value="moyenne">Moyenne</option>
+          <option value="critique">Critique</option>
+        </select>
+      </div>
 
-    <div class="champ">
-      <label>Client *</label>
-      <input v-model="form.client_nom" placeholder="Nom du client" />
-    </div>
+      <div class="grille-2">
+        <div class="champ">
+          <label>Client *</label>
+          <input v-model="form.client_nom" placeholder="Nom du client" />
+        </div>
 
-    <!-- ✅ Email NON obligatoire -->
-    <div class="champ">
-      <label>Email client</label>
-      <input
-        type="email"
-        v-model="form.client_email"
-        placeholder="Optionnel"
-      />
-    </div>
+        <div class="champ">
+          <label>Téléphone client *</label>
+          <input type="tel" v-model="form.client_telephone" placeholder="771234567" />
+        </div>
+      </div>
 
-    <div class="champ">
-      <label>Téléphone client *</label>
-      <input
-        type="tel"
-        v-model="form.client_telephone"
-        placeholder="771234567"
-      />
-    </div>
+      <div class="champ">
+        <label>Email client <span class="optionnel">(optionnel)</span></label>
+        <input type="email" v-model="form.client_email" placeholder="client@exemple.sn" />
+      </div>
 
-    <div v-if="erreur" class="erreur">
-      {{ erreur }}
-    </div>
+      <div v-if="erreur" class="message-erreur">{{ erreur }}</div>
 
-    <div class="actions">
-      <button
-        type="button"
-        class="btn-annuler"
-        @click="annuler"
-        :disabled="chargement"
-      >
-        Annuler
-      </button>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" @click="annuler" :disabled="chargement">
+          Annuler
+        </button>
 
-      <button
-        class="btn-creer"
-        @click="soumettre"
-        :disabled="chargement"
-      >
-        {{ chargement ? 'Création...' : 'Créer le ticket' }}
-      </button>
+        <button class="btn btn-primary" @click="soumettre" :disabled="chargement">
+          {{ chargement ? 'Création...' : 'Créer le ticket' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -93,20 +80,17 @@ const form = ref({
 const soumettre = async () => {
   erreur.value = '';
 
-  //  Champs obligatoires
   if (!form.value.titre || !form.value.client_nom || !form.value.client_telephone) {
     erreur.value = 'Tous les champs marqués * sont obligatoires';
     return;
   }
 
-  // Validation téléphone Sénégal
   const phoneRegex = /^(77|76|78|70|75)[0-9]{7}$/;
   if (!phoneRegex.test(form.value.client_telephone)) {
     erreur.value = 'Numéro invalide (ex: 771234567)';
     return;
   }
 
-  //  Email optionnel mais valide si rempli
   if (form.value.client_email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.value.client_email)) {
@@ -118,7 +102,6 @@ const soumettre = async () => {
   chargement.value = true;
 
   try {
-    // envoyer null si email vide
     const data = {
       ...form.value,
       client_email: form.value.client_email || null
@@ -139,72 +122,61 @@ const annuler = () => {
 </script>
 
 <style scoped>
+.page {
+  padding: 36px 20px 60px;
+  display: flex;
+  justify-content: center;
+}
+
 .creation-ticket {
-  max-width: 600px;
-  margin: 30px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.champ {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-input,
-textarea,
-select {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  max-width: 560px;
+  padding: 32px 32px 28px;
+}
+
+.entete-form {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+}
+
+.entete-form h2 {
+  font-size: 21px;
+  margin-top: 6px;
+}
+
+.grille-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.optionnel {
+  text-transform: none;
+  font-weight: 400;
+  color: #9aa1ad;
+  letter-spacing: 0;
 }
 
 .actions {
   display: flex;
   gap: 12px;
+  margin-top: 6px;
 }
 
-.actions button {
+.actions .btn {
   flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
-.btn-creer {
-  background: #2563eb;
-  color: white;
-}
-
-.btn-creer:hover {
-  background: #1d4ed8;
-}
-
-.btn-annuler {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.btn-annuler:hover {
-  background: #d1d5db;
-}
-
-.erreur {
-  color: red;
-  margin-bottom: 10px;
+@media (max-width: 480px) {
+  .grille-2 {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

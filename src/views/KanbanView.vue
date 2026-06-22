@@ -1,9 +1,14 @@
 <template>
   <div class="kanban">
+
      <BarreFiltres @filtrer="appliquerFiltres" /> 
 
     <div v-if="store.chargement">
       Chargement...
+
+    <div v-if="store.chargement" class="chargement">
+      Chargement du tableau...
+
     </div>
 
     <div
@@ -16,6 +21,7 @@
         :key="statut"
       >
         <div class="colonne-header">
+          <span :class="['dot', statut]"></span>
           <h3>{{ labelsStatut[statut] }}</h3>
 
           <span class="compteur">
@@ -36,16 +42,21 @@
               @click="voirDetail(element.id)"
             />
           </template>
+
+          <template #footer>
+            <p v-if="tickets.length === 0" class="colonne-vide">
+              Aucun ticket
+            </p>
+          </template>
         </draggable>
       </div>
     </div>
 
-    <div
-      v-if="erreurTransition"
-      class="erreur-transition"
-    >
-      {{ erreurTransition }}
-    </div>
+    <transition name="fade-up">
+      <div v-if="erreurTransition" class="erreur-transition">
+        {{ erreurTransition }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -65,8 +76,9 @@ const router = useRouter();
 const erreurTransition = ref('');
 
 const labelsStatut = {
-  a_faire: 'A faire',
+  a_faire: 'À faire',
   en_cours: 'En cours',
+
   bloque: 'Bloque',
   resolu: 'Resolu'
 };
@@ -76,6 +88,12 @@ function appliquerFiltres(filtres) {
 }
 
 // Déclenché lorsqu'une carte est déplacée
+
+  bloque: 'Bloqué',
+  resolu: 'Résolu',
+};
+
+>>>>>>> 335373fe18ec3e1cc656a2d0cf1dc81beb1e5b1e
 async function onChange(event, nouveauStatut) {
   if (!event.added) return;
 
@@ -84,16 +102,22 @@ async function onChange(event, nouveauStatut) {
   erreurTransition.value = '';
 
   try {
+
     await store.changerStatut(
       ticket.id,
       nouveauStatut
     );
+
+    await store.changerStatut(ticket.id, nouveauStatut);
+
   } catch (error) {
     erreurTransition.value =
       error.response?.data?.message ||
       'Transition non autorisee';
 
     await store.chargerTickets();
+
+    setTimeout(() => (erreurTransition.value = ''), 4000);
   }
 }
 
@@ -108,56 +132,109 @@ onMounted(() => {
 
 <style scoped>
 .kanban {
-  padding: 20px;
+  padding: 24px 28px;
+}
+
+.chargement {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 40px 0;
+  text-align: center;
 }
 
 .colonnes {
   display: flex;
-  gap: 16px;
+  gap: 18px;
   overflow-x: auto;
-  min-height: 80vh;
+  align-items: flex-start;
 }
 
 .colonne {
   flex: 1;
-  min-width: 260px;
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.zone-depot {
-  min-height: 100px;
-  padding: 4px;
+  min-width: 270px;
+  background: #ebedf1;
+  border-radius: var(--radius-lg);
+  padding: 14px;
 }
 
 .colonne-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 0 2px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot.a_faire { background: var(--ink-soft); }
+.dot.en_cours { background: var(--warning); }
+.dot.bloque { background: var(--danger); }
+.dot.resolu { background: var(--success); }
+
+.colonne-header h3 {
+  font-size: 13.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  flex: 1;
 }
 
 .compteur {
-  background: #2563eb;
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  font-family: var(--font-mono);
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 99px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+.zone-depot {
+  min-height: 120px;
+}
+
+.colonne-vide {
+  text-align: center;
   font-size: 12px;
+  color: #aab0bb;
+  padding: 18px 0;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
 }
 
 .erreur-transition {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #dc2626;
-  color: white;
-  padding: 12px;
-  border-radius: 8px;
-  max-width: 300px;
+  bottom: 24px;
+  right: 24px;
+  background: var(--navy);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  max-width: 320px;
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  border-left: 4px solid var(--danger);
+}
+
+.fade-up-enter-active, .fade-up-leave-active {
+  transition: all 0.25s ease;
+}
+.fade-up-enter-from, .fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 </style>
