@@ -54,7 +54,14 @@
 
     <div class="user-info">
         <ClocheNotifications />
-     
+      
+   <span class="user-name">
+    {{ authStore.user?.nom }}
+ </span>
+
+  <span class="user-role">
+    {{ authStore.user?.role }}
+  </span>
       <button class="btn-deconnexion" @click="deconnecter">Déconnexion</button>
     </div>
   </nav>
