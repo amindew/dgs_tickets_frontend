@@ -39,7 +39,26 @@
 
       <div class="champ">
         <label>Email client <span class="optionnel">(optionnel)</span></label>
-        <input type="email" v-model="form.client_email" placeholder="client@exemple.sn" />
+        <input
+          type="email"
+          v-model="form.client_email"
+          placeholder="client@exemple.sn"
+          :class="{ 'input-erreur': emailClientInvalide }"
+          @blur="validerEmailClient"
+        />
+        <span v-if="emailClientInvalide" class="hint-erreur">Format invalide (ex: nom@domaine.sn)</span>
+      </div>
+
+      <!-- Assignation technicien -->
+      <div class="champ">
+        <label>Assigner à un technicien <span class="optionnel">(optionnel)</span></label>
+        <select v-model="form.assigne_id">
+          <option value="">— Non assigné —</option>
+          <option v-for="tech in techniciens" :key="tech.id" :value="tech.id">
+            {{ tech.nom }}
+          </option>
+        </select>
+        <span v-if="chargementTechs" class="hint-info">Chargement des techniciens...</span>
       </div>
 
       <div v-if="erreur" class="message-erreur">{{ erreur }}</div>
@@ -48,7 +67,6 @@
         <button type="button" class="btn btn-secondary" @click="annuler" :disabled="chargement">
           Annuler
         </button>
-
         <button class="btn btn-primary" @click="soumettre" :disabled="chargement">
           {{ chargement ? 'Création...' : 'Créer le ticket' }}
         </button>
@@ -58,15 +76,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTicketsStore } from '../stores/tickets';
+import api from '../services/api';
 
 const router = useRouter();
-const store = useTicketsStore();
+const store  = useTicketsStore();
 
-const erreur = ref('');
-const chargement = ref(false);
+const erreur      = ref('');
+const chargement  = ref(false);
+const techniciens = ref([]);
+const chargementTechs    = ref(false);
+const emailClientInvalide = ref(false);
 
 const form = ref({
   titre: '',
@@ -74,8 +96,15 @@ const form = ref({
   priorite: 'moyenne',
   client_nom: '',
   client_email: '',
-  client_telephone: ''
+  client_telephone: '',
+  assigne_id: ''
 });
+
+function validerEmailClient() {
+  if (!form.value.client_email) { emailClientInvalide.value = false; return }
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  emailClientInvalide.value = !re.test(form.value.client_email)
+}
 
 const soumettre = async () => {
   erreur.value = '';
@@ -92,21 +121,17 @@ const soumettre = async () => {
   }
 
   if (form.value.client_email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.value.client_email)) {
-      erreur.value = 'Email invalide';
-      return;
-    }
+    validerEmailClient();
+    if (emailClientInvalide.value) { erreur.value = 'Email client invalide'; return; }
   }
 
   chargement.value = true;
-
   try {
     const data = {
       ...form.value,
-      client_email: form.value.client_email || null
+      client_email: form.value.client_email || null,
+      assigne_id:   form.value.assigne_id   || null
     };
-
     await store.creerTicket(data);
     router.push('/kanban');
   } catch (e) {
@@ -116,9 +141,19 @@ const soumettre = async () => {
   }
 };
 
-const annuler = () => {
-  router.push('/kanban');
-};
+const annuler = () => router.push('/kanban');
+
+onMounted(async () => {
+  chargementTechs.value = true;
+  try {
+    const res = await api.get('/users?role=technicien');
+    techniciens.value = res.data.data;
+  } catch (e) {
+    console.error('Erreur chargement techniciens', e);
+  } finally {
+    chargementTechs.value = false;
+  }
+});
 </script>
 
 <style scoped>
@@ -134,22 +169,15 @@ const annuler = () => {
   padding: 32px 32px 28px;
 }
 
-.entete-form {
-  margin-bottom: 24px;
-}
+.entete-form { margin-bottom: 24px; }
 
 .eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
   color: var(--accent);
 }
 
-.entete-form h2 {
-  font-size: 21px;
-  margin-top: 6px;
-}
+.entete-form h2 { font-size: 21px; margin-top: 6px; }
 
 .grille-2 {
   display: grid;
@@ -158,25 +186,18 @@ const annuler = () => {
 }
 
 .optionnel {
-  text-transform: none;
-  font-weight: 400;
-  color: #9aa1ad;
-  letter-spacing: 0;
+  text-transform: none; font-weight: 400;
+  color: #9aa1ad; letter-spacing: 0;
 }
 
-.actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 6px;
-}
+.input-erreur { border-color: var(--danger) !important; }
+.hint-erreur  { font-size: 11px; color: var(--danger); margin-top: 2px; display: block; }
+.hint-info    { font-size: 11px; color: var(--ink-soft); margin-top: 2px; display: block; }
 
-.actions .btn {
-  flex: 1;
-}
+.actions { display: flex; gap: 12px; margin-top: 6px; }
+.actions .btn { flex: 1; }
 
 @media (max-width: 480px) {
-  .grille-2 {
-    grid-template-columns: 1fr;
-  }
+  .grille-2 { grid-template-columns: 1fr; }
 }
 </style>

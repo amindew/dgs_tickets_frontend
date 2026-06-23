@@ -18,6 +18,12 @@ const routes = [
     component: () => import('../views/DetailTicketView.vue'),
     meta: { requiresAuth: true }
   },
+
+  {
+  path: '/admin/utilisateurs',
+  component: () => import('../views/AdminUsers.vue'),
+  meta: { requiresAuth: true, roles: ['admin'] }
+},
 ];
 const router = createRouter({ history: createWebHistory(), routes });
 // Guard global : vérifier avant chaque navigation
@@ -31,4 +37,6 @@ router.beforeEach((to, from, next) => {
     next(); // OK : laisser passer
   }
 });
+
+
 export default router; 

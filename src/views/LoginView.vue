@@ -3,7 +3,7 @@
     <div class="login-card card-surface">
       <div class="login-brand">
         <span class="pulse" aria-hidden="true"></span>
-        <span class="login-logo">DGS<span>Tickets</span></span>
+        <span class="login-logo">DGS<span>STICKS</span></span>
       </div>
       <p class="login-sub">Connectez-vous à votre compte</p>
 
