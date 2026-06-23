@@ -53,8 +53,8 @@
     </div>
 
     <div class="user-info">
-      <span class="user-name">{{ authStore.user?.nom }}</span>
-      <span class="user-role">{{ authStore.user?.role }}</span>
+        <ClocheNotifications />
+     
       <button class="btn-deconnexion" @click="deconnecter">Déconnexion</button>
     </div>
   </nav>
@@ -63,6 +63,7 @@
 <script setup>
 import { useAuthStore } from '../stores/auth';
 import { useRouter, useRoute } from 'vue-router';
+import ClocheNotifications from './ClocheNotifications.vue';
 
 const authStore = useAuthStore();
 const router    = useRouter();

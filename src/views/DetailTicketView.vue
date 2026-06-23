@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="page" v-if="ticket">
     <div class="detail-ticket">
@@ -48,17 +49,34 @@
       </div>
 
       <!-- SLA -->
-      <div class="card-surface sla-block" :class="{ depasse: slaDepasse }">
+      <div
+        v-if="sla"
+        class="sla-bloc"
+        :class="{ depasse: sla.depasse }"
+      >
         <h3>Indicateur SLA</h3>
 
-        <p class="sla-duree">{{ dureeEcouleeMin }} min</p>
+        <div class="sla-infos">
+          <span>Duree ecoule : {{ sla.duree_actuelle_min }} min</span>
+          <span>Seuil : {{ sla.seuil_min }} min</span>
+        </div>
 
-        <p v-if="ticket.resolu_le" class="sla-detail">
-          Résolu en {{ ticket.duree_resolution_min }} minutes
+        <div class="barre-sla">
+          <div
+            class="barre-fill"
+            :style="{
+              width: sla.pourcentage + '%',
+              background: sla.depasse ? '#dc2626' : '#16a34a'
+            }"
+          ></div>
+        </div>
+
+        <p v-if="sla.depasse" class="sla-alerte">
+          SLA depasse !
         </p>
 
-        <p v-else class="sla-detail">
-          Ticket en cours de traitement
+        <p v-else class="sla-ok">
+          {{ sla.pourcentage }}% du seuil utilise
         </p>
       </div>
 
@@ -121,6 +139,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { ticketService } from '../services/ticketService';
+import api from '../services/api';
 
 import FilCommentaires from '../components/tickets/FilCommentaires.vue';
 import ZoneUpload from '../components/tickets/ZoneUpload.vue';
@@ -129,6 +148,7 @@ const route = useRoute();
 
 const ticket = ref(null);
 const historique = ref([]);
+const sla = ref(null);
 
 const labelsStatut = {
   a_faire: 'À faire',
@@ -158,7 +178,12 @@ function formatDate(date) {
 
 onMounted(async () => {
   ticket.value = await ticketService.getDetail(route.params.id);
-  historique.value = await ticketService.getHistorique(route.params.id);
+
+  const resSla = await api.get(`/tickets/${route.params.id}/sla`);
+  sla.value = resSla.data.data;
+
+  const resHistorique = await api.get(`/tickets/${route.params.id}/historique`);
+  historique.value = resHistorique.data.data;
 });
 </script>
 
@@ -194,7 +219,6 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-/* ENTETE */
 .entete {
   display: flex;
   gap: 8px;
@@ -206,7 +230,6 @@ onMounted(async () => {
   color: #6b7280;
 }
 
-/* TAGS */
 .tag {
   font-size: 11px;
   padding: 3px 8px;
@@ -220,7 +243,6 @@ onMounted(async () => {
 .tag.bloque { background: #fee2e2; color: #dc2626; }
 .tag.resolu { background: #dcfce7; color: #16a34a; }
 
-/* INFOS */
 .infos-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -233,7 +255,6 @@ onMounted(async () => {
   color: #9ca3af;
 }
 
-/* SLA */
 .sla-block {
   background: #f0fdf4;
   border-left: 4px solid #22c55e;
@@ -251,7 +272,6 @@ onMounted(async () => {
   font-weight: bold;
 }
 
-/* TIMELINE */
 .timeline-item {
   display: flex;
   gap: 10px;
@@ -273,10 +293,54 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* LOADING */
 .chargement-page {
   text-align: center;
   padding: 60px;
   color: #6b7280;
 }
+
+.sla-bloc {
+  background: #f0fdf4;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.sla-bloc.depasse {
+  background: #fef2f2;
+  border: 1px solid #dc2626;
+}
+
+.sla-infos {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.barre-sla {
+  background: #e2e8f0;
+  border-radius: 999px;
+  height: 8px;
+}
+
+.barre-fill {
+  height: 8px;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.sla-alerte {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.sla-ok {
+  color: #16a34a;
+  font-size: 12px;
+  margin-top: 6px;
+}
 </style>
+```
