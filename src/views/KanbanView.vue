@@ -1,6 +1,7 @@
 <template>
   <div class="kanban-page">
 
+    <!-- Overlay semi-transparent derriere le drawer -->
     <transition name="overlay-fade">
       <div
         v-if="drawerOuvert"
@@ -10,10 +11,15 @@
       ></div>
     </transition>
 
+    <!-- Drawer lateral glissant depuis la gauche -->
     <transition name="drawer-slide">
       <div v-if="drawerOuvert" class="drawer" role="dialog" aria-label="Filtres">
         <div class="drawer-close">
-          <button class="btn-fermer" @click="$emit('update:drawerOuvert', false)" aria-label="Fermer les filtres">
+          <button
+            class="btn-fermer"
+            @click="$emit('update:drawerOuvert', false)"
+            aria-label="Fermer les filtres"
+          >
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
@@ -23,7 +29,9 @@
       </div>
     </transition>
 
+    <!-- Contenu Kanban (s'assombrit quand le drawer est ouvert) -->
     <div class="kanban-contenu" :class="{ 'contenu-dimme': drawerOuvert }">
+
       <div v-if="store.chargement" class="chargement">
         <span class="chargement-dot"></span>
         <span class="chargement-dot"></span>
@@ -31,7 +39,11 @@
       </div>
 
       <div v-else class="colonnes">
-        <div v-for="(tickets, statut) in store.tickets" :key="statut" class="colonne">
+        <div
+          v-for="(tickets, statut) in store.tickets"
+          :key="statut"
+          class="colonne"
+        >
           <div class="colonne-header">
             <div class="colonne-titre">
               <span class="colonne-accent" :style="{ background: couleurAccent[statut] }"></span>
@@ -61,10 +73,6 @@
                     {{ labelsPriorite[element.priorite] || element.priorite }}
                   </span>
                   <span v-if="element.echeance" class="carte-date">
-                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                      <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                      <path d="M4 1v2M8 1v2M1 5h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-                    </svg>
                     {{ formaterDate(element.echeance) }}
                   </span>
                 </div>
@@ -72,34 +80,11 @@
                 <div class="carte-sep"></div>
 
                 <div class="carte-pied">
-                  <!-- Assigné : affiche l'avatar + nom + bouton changer -->
                   <div v-if="element.assigne" class="carte-assigne">
-                    <div class="avatar-xs" :style="{ background: couleurUser(element.assigne) }">
-                     {{ initiales(element.assigne) }}
-                    </div>
+                    <div class="avatar-xs" :style="{ background: couleurUser(element.assigne) }">{{ initiales(element.assigne) }}</div>
                     <span class="assigne-nom">{{ element.assigne.nom }}</span>
-                    <button
-                      v-if="authStore.estAdmin || authStore.estResponsable"
-                      class="btn-changer-assign"
-                      title="Changer le technicien"
-                      @click.stop="ouvrirAssignation(element)"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
                   </div>
-
-                  <!-- Non assigné : bouton cliquable -->
-                  <button
-                    v-else-if="authStore.estAdmin || authStore.estResponsable"
-                    class="btn-assigner"
-                    @click.stop="ouvrirAssignation(element)"
-                  >
-                    + Assigner
-                  </button>
                   <span v-else class="non-assigne">Non assigné</span>
-
                   <span v-if="element.client_nom" class="carte-client">{{ element.client_nom }}</span>
                 </div>
               </div>
@@ -117,67 +102,14 @@
           </draggable>
         </div>
       </div>
+
     </div>
 
-    <!-- Modale assignation -->
-    <transition name="modal">
-      <div v-if="modalAssignOuverte" class="modal-overlay" @click.self="fermerAssignation">
-        <div class="modal-assign card-surface">
-          <div class="modal-header">
-            <div>
-              <p class="modal-eyebrow">{{ ticketSelectionne?.reference }}</p>
-              <h3 class="modal-titre">Assigner le ticket</h3>
-            </div>
-            <button class="btn-fermer" @click="fermerAssignation">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <p class="modal-ticket-titre">{{ ticketSelectionne?.titre }}</p>
-
-          <div v-if="chargementTechs" class="techs-loading">Chargement...</div>
-          <div v-else class="techs-liste">
-            <button
-              v-for="tech in techniciens"
-              :key="tech.id"
-              class="tech-item"
-              :class="{ selectionne: techChoisi === tech.id }"
-              @click="techChoisi = tech.id"
-            >
-              <div class="tech-avatar" :style="{ background: couleurAvatar(tech.id) }">
-                {{ tech.nom.slice(0, 2).toUpperCase() }}
-              </div>
-              <span class="tech-nom">{{ tech.nom }}</span>
-              <svg v-if="techChoisi === tech.id" class="check" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="erreurAssign" class="message-erreur">{{ erreurAssign }}</div>
-
-          <div class="modal-footer">
-            <button class="btn-annuler" @click="fermerAssignation">Annuler</button>
-            <button
-              class="btn-confirmer"
-              :disabled="!techChoisi || assignEnCours"
-              @click="confirmerAssignation"
-            >
-              {{ assignEnCours ? 'Assignation...' : 'Confirmer' }}
-            </button>
-          </div>
-        </div>
+    <!-- Toast erreur transition -->
+    <transition name="toast">
+      <div v-if="erreurTransition" class="toast-erreur">
+        {{ erreurTransition }}
       </div>
-    </transition>
-
-    <transition name="toast">
-      <div v-if="erreurTransition" class="toast-erreur">{{ erreurTransition }}</div>
-    </transition>
-
-    <transition name="toast">
-      <div v-if="toastSucces" class="toast-succes">{{ toastSucces }}</div>
     </transition>
 
   </div>
@@ -188,30 +120,19 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import draggable from 'vuedraggable';
 import { useTicketsStore } from '../stores/tickets';
-import { useAuthStore } from '../stores/auth';
 import BarreFiltres from '../components/Kanban/BarreFiltres.vue';
-import api from '../services/api';
 
+// Prop reçue depuis App.vue
 const props = defineProps({
   drawerOuvert: { type: Boolean, default: false },
 });
+
 const emit = defineEmits(['update:drawerOuvert']);
 
-const store     = useTicketsStore();
-const authStore = useAuthStore();
-const router    = useRouter();
-
-const erreurTransition   = ref('');
-const toastSucces        = ref('');
-const modalAssignOuverte = ref(false);
-const ticketSelectionne  = ref(null);
-const techniciens        = ref([]);
-const techChoisi         = ref(null);
-const chargementTechs    = ref(false);
-const assignEnCours      = ref(false);
-const erreurAssign       = ref('');
+const store  = useTicketsStore();
+const router = useRouter();
+const erreurTransition = ref('');
 let erreurTimer = null;
-let toastTimer  = null;
 
 const labelsStatut = {
   a_faire:  'À faire',
@@ -235,8 +156,21 @@ const labelsPriorite = {
   basse:    'Basse',
 };
 
-const palette = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#0f172a'];
-function couleurAvatar(id) { return palette[id % palette.length]; }
+const palette = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#a855f7'];
+
+function hashId(id) {
+  if (!id) return 0;
+  return String(id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+}
+
+function couleurAvatar(id) {
+  return palette[hashId(id) % palette.length];
+}
+
+function couleurUser(user) {
+  if (!user?.id) return '#1e293b';
+  return palette[hashId(user.id) % palette.length];
+}
 
 function initiales(user) {
   if (!user) return '?';
@@ -259,7 +193,8 @@ async function onChange(event, nouveauStatut) {
   try {
     await store.changerStatut(ticket.id, nouveauStatut);
   } catch (error) {
-    erreurTransition.value = error.response?.data?.message || 'Transition non autorisée';
+    erreurTransition.value =
+      error.response?.data?.message || 'Transition non autorisée';
     clearTimeout(erreurTimer);
     erreurTimer = setTimeout(() => { erreurTransition.value = ''; }, 4000);
     await store.chargerTickets();
@@ -270,57 +205,10 @@ function voirDetail(id) {
   router.push(`/tickets/${id}`);
 }
 
-// --- Assignation ---
-async function ouvrirAssignation(ticket) {
-  ticketSelectionne.value = ticket;
-  techChoisi.value = ticket.assigne?.id || null;
-  erreurAssign.value = '';
-  modalAssignOuverte.value = true;
-
-  if (techniciens.value.length === 0) {
-    chargementTechs.value = true;
-    try {
-      const res = await api.get('/users?role=technicien');
-      techniciens.value = res.data.data;
-    } catch (e) {
-      erreurAssign.value = 'Impossible de charger les techniciens';
-    } finally {
-      chargementTechs.value = false;
-    }
-  }
-}
-
-function fermerAssignation() {
-  modalAssignOuverte.value = false;
-  ticketSelectionne.value  = null;
-  techChoisi.value         = null;
-}
-
-async function confirmerAssignation() {
-  if (!techChoisi.value) return;
-  assignEnCours.value = true;
-  erreurAssign.value  = '';
-  try {
-    await store.assignerTicket(ticketSelectionne.value.id, techChoisi.value);
-    fermerAssignation();
-    afficherToast('Ticket assigné avec succès');
-  } catch (e) {
-    erreurAssign.value = e.response?.data?.message || 'Erreur lors de l\'assignation';
-  } finally {
-    assignEnCours.value = false;
-  }
-}
-
-function afficherToast(msg) {
-  toastSucces.value = msg;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toastSucces.value = ''; }, 3000);
-}
-
+// Fermer le drawer avec la touche Echap
 function onKeydown(e) {
-  if (e.key === 'Escape') {
-    if (modalAssignOuverte.value) { fermerAssignation(); return; }
-    if (props.drawerOuvert) emit('update:drawerOuvert', false);
+  if (e.key === 'Escape' && props.drawerOuvert) {
+    emit('update:drawerOuvert', false);
   }
 }
 
@@ -332,14 +220,6 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown);
 });
-
-
-function couleurUser(user) {
-  if (!user?.id) return '#1e293b'
-  const hash = user.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return palette[hash % palette.length]
-}
-
 </script>
 
 <style scoped>
@@ -349,243 +229,241 @@ function couleurUser(user) {
   background: var(--bg);
 }
 
+/* Overlay */
 .overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  inset: 0;
   background: rgba(15, 23, 42, 0.35);
-  z-index: 30; cursor: pointer;
+  z-index: 30;
+  cursor: pointer;
 }
-.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.25s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+.overlay-fade-enter-active,
+.overlay-fade-leave-active { transition: opacity 0.25s ease; }
+.overlay-fade-enter-from,
+.overlay-fade-leave-to     { opacity: 0; }
 
+/* Drawer */
 .drawer {
-  position: fixed; top: 60px; left: 0; bottom: 0; width: 300px;
-  background: white; border-right: 1px solid var(--border);
-  box-shadow: 4px 0 24px rgba(15,23,42,.12);
-  z-index: 40; overflow-y: auto; display: flex; flex-direction: column;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+  background: white;
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.12);
+  z-index: 40;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
-.drawer-slide-enter-active, .drawer-slide-leave-active {
-  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-}
-.drawer-slide-enter-from, .drawer-slide-leave-to { transform: translateX(-100%); }
 
-.drawer-close { display: flex; justify-content: flex-end; padding: 10px 12px 0; }
+.drawer-slide-enter-active,
+.drawer-slide-leave-active {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.drawer-slide-enter-from,
+.drawer-slide-leave-to { transform: translateX(-100%); }
+
+.drawer-close {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px 0;
+}
+
 .btn-fermer {
-  background: none; border: none; cursor: pointer;
-  color: #64748b; padding: 4px; border-radius: 4px;
-  display: flex; align-items: center; transition: background 0.15s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
 }
 .btn-fermer:hover { background: #f1f5f9; color: #1e293b; }
 
-.kanban-contenu { padding: 20px 16px; min-height: 100vh; transition: opacity 0.25s ease; }
-.contenu-dimme  { opacity: 0.5; pointer-events: none; }
+/* Contenu Kanban */
+.kanban-contenu {
+  padding: 20px;
+  min-height: 100vh;
+  transition: opacity 0.25s ease;
+}
+.contenu-dimme {
+  opacity: 0.5;
+  pointer-events: none;
+}
 
+/* Colonnes */
 .colonnes {
-  display: flex; gap: 14px;
-  align-items: flex-start;
-  min-height: calc(100vh - 100px);
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  min-height: 78vh;
+  padding-bottom: 8px;
 }
 
 .colonne {
-  flex: 1; min-width: 220px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-md); overflow: hidden;
-  display: flex; flex-direction: column;
-  min-height: calc(100vh - 120px);
+  flex: 1;
+  min-width: 240px;
+  max-width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .colonne-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; border-bottom: 1px solid var(--border);
-  background: var(--surface); position: sticky; top: 0; z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
 }
 
 .colonne-titre { display: flex; align-items: center; gap: 8px; }
-.colonne-accent { width: 3px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-.colonne-label  { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+.colonne-accent {
+  width: 3px; height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.colonne-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+
 .compteur {
-  font-size: 11px; font-weight: 600; padding: 2px 9px;
-  border-radius: 999px; background: var(--bg); color: var(--ink-soft);
-  border: 1px solid var(--border); min-width: 24px; text-align: center;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink-soft);
+  border: 1px solid var(--border);
 }
 
 .zone-depot {
-  flex: 1; padding: 12px;
-  display: flex; flex-direction: column; gap: 10px; min-height: 200px;
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 80px;
 }
 
+/* Carte */
 .carte {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 12px 12px 0; cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 10px 0;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.carte:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.carte:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
 
-.carte-id    { font-size: 10px; color: var(--ink-soft); font-family: monospace; letter-spacing: 0.3px; margin-bottom: 5px; }
-.carte-titre { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.45; margin-bottom: 10px; }
+.carte-id {
+  font-size: 10px; color: var(--ink-soft);
+  font-family: monospace; letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
 
-.carte-meta  { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.carte-titre {
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  line-height: 1.4; margin-bottom: 8px;
+}
+
+.carte-meta {
+  display: flex; align-items: center;
+  gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+}
 
 .prio-badge {
   display: inline-flex; align-items: center; gap: 3px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.04em; padding: 3px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 3px 7px; border-radius: 999px;
 }
+
 .prio-critique { background: var(--danger-soft);  color: var(--danger); }
 .prio-haute    { background: var(--warning-soft); color: #a16207; }
 .prio-moyenne  { background: var(--warning-soft); color: #a16207; }
 .prio-normale  { background: #e0f2fe; color: #0369a1; }
 .prio-basse    { background: var(--success-soft);  color: var(--success); }
 
-.carte-date { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: var(--ink-soft); }
+.carte-date { font-size: 10px; color: var(--ink-soft); }
 
-.carte-sep { border-top: 2px dashed var(--border); margin: 0 -12px; }
+.carte-sep {
+  border-top: 2px dashed var(--border);
+  margin: 0 -10px;
+}
 
 .carte-pied {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 0 10px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 8px;
 }
 
 .carte-assigne { display: flex; align-items: center; gap: 5px; }
 
 .avatar-xs {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--navy); color: white;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 8px; font-weight: 600; flex-shrink: 0;
 }
 
-.assigne-nom { font-size: 11px; color: var(--ink-soft); }
-
-.btn-changer-assign {
-  background: none; border: none; cursor: pointer;
-  color: var(--ink-soft); padding: 2px; border-radius: 3px;
-  display: flex; align-items: center; opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
-}
-.carte:hover .btn-changer-assign { opacity: 1; }
-.btn-changer-assign:hover { color: var(--accent); }
-
-.btn-assigner {
-  font-size: 11px; font-weight: 600;
-  color: var(--accent); background: var(--accent-soft);
-  border: 1px dashed var(--accent); border-radius: 6px;
-  padding: 3px 9px; cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-assigner:hover { background: #fed7aa; }
-
-.non-assigne  { font-size: 11px; color: var(--ink-soft); font-style: italic; }
+.assigne-nom  { font-size: 10px; color: var(--ink-soft); }
+.non-assigne  { font-size: 10px; color: var(--ink-soft); font-style: italic; }
 .carte-client {
   font-size: 10px; color: var(--ink-soft);
-  max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 80px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
 }
 
 .vide {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 8px; padding: 40px 0; color: var(--border-strong); font-size: 12px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  padding: 24px 0;
+  color: var(--border-strong); font-size: 12px;
 }
 
-.chargement { display: flex; gap: 6px; justify-content: center; padding: 80px 0; }
+.chargement {
+  display: flex; gap: 6px;
+  justify-content: center; padding: 60px 0;
+}
+
 .chargement-dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: var(--accent); animation: pulse 1.2s ease-in-out infinite;
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
 }
 .chargement-dot:nth-child(2) { animation-delay: 0.2s; }
 .chargement-dot:nth-child(3) { animation-delay: 0.4s; }
+
 @keyframes pulse {
   0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-  40%           { opacity: 1;   transform: scale(1); }
+  40%            { opacity: 1;   transform: scale(1); }
 }
 
-/* Modale assignation */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(15,23,42,0.45);
-  z-index: 100;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
-}
-
-.modal-assign {
-  width: 100%; max-width: 380px; padding: 24px;
-  border-radius: var(--radius-md);
-}
-
-.modal-header {
-  display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px;
-}
-
-.modal-eyebrow {
-  font-size: 10px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--accent); margin-bottom: 2px;
-}
-
-.modal-titre { font-size: 16px; font-weight: 700; color: var(--ink); }
-
-.modal-ticket-titre {
-  font-size: 13px; color: var(--ink-soft);
-  margin-bottom: 18px; line-height: 1.4;
-}
-
-.techs-loading { font-size: 13px; color: var(--ink-soft); padding: 16px 0; text-align: center; }
-
-.techs-liste { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 280px; overflow-y: auto; }
-
-.tech-item {
-  display: flex; align-items: center; gap: 10px;
-  background: none; border: 1px solid var(--border);
-  border-radius: 10px; padding: 10px 12px; cursor: pointer;
-  transition: all 0.15s; text-align: left;
-}
-.tech-item:hover { border-color: var(--accent); background: var(--accent-soft); }
-.tech-item.selectionne { border-color: var(--accent); background: var(--accent-soft); }
-
-.tech-avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  color: white; font-size: 11px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-
-.tech-nom { flex: 1; font-size: 13px; font-weight: 500; color: var(--ink); }
-
-.check { color: var(--accent); flex-shrink: 0; }
-
-.modal-footer {
-  display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;
-}
-
-.btn-annuler {
-  background: white; border: 1px solid var(--border);
-  color: var(--ink-soft); border-radius: 10px;
-  padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
-}
-
-.btn-confirmer {
-  background: var(--accent); color: white; border: none;
-  border-radius: 10px; padding: 9px 18px;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-confirmer:hover:not(:disabled) { background: #ea580c; }
-.btn-confirmer:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* Toasts */
 .toast-erreur {
   position: fixed; bottom: 24px; right: 24px;
   background: var(--danger); color: white;
-  padding: 12px 16px; border-radius: var(--radius-sm);
-  font-size: 13px; font-weight: 500; max-width: 320px;
-  box-shadow: var(--shadow-md); z-index: 999;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  max-width: 320px;
+  box-shadow: var(--shadow-md);
+  z-index: 999;
 }
-.toast-succes {
-  position: fixed; bottom: 24px; right: 24px;
-  background: var(--success); color: white;
-  padding: 12px 16px; border-radius: var(--radius-sm);
-  font-size: 13px; font-weight: 500; max-width: 320px;
-  box-shadow: var(--shadow-md); z-index: 999;
-}
-.toast-enter-active, .toast-leave-active { transition: all 0.25s ease; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(8px); }
 
-.modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
+.toast-enter-active,
+.toast-leave-active { transition: all 0.25s ease; }
+.toast-enter-from,
+.toast-leave-to     { opacity: 0; transform: translateY(8px); }
 </style>

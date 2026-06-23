@@ -17,14 +17,23 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import NavBar from './components/NavBar.vue';
 import { useAuthStore } from './stores/auth';
+import { useNotificationsStore } from './stores/notifications';
 
 const authStore    = useAuthStore();
+const notifStore   = useNotificationsStore();
 const route        = useRoute();
 const drawerOuvert = ref(false);
+
+// Reconnecter le WebSocket après un refresh de page
+onMounted(() => {
+  if (authStore.estConnecte && authStore.user?.id) {
+    notifStore.connecter(authStore.user.id);
+  }
+});
 
 // Fermer le drawer quand on change de page
 watch(() => route.path, () => {

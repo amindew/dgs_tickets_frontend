@@ -34,17 +34,17 @@
             v-for="n in store.notifications"
             :key="n.id"
             :class="['notif-item', { 'non-lue': !n.lue }]"
-            @click="store.marquerLue(n.id)"
+            @click="ouvrirNotification(n)"
           >
             <div class="notif-corps">
               <span class="notif-ref">{{ n.reference }}</span>
 
               <span class="notif-texte">
-                {{ n.ancien_statut }} → {{ n.nouveau_statut }}
+                {{ formatNotification(n) }}
               </span>
 
               <span class="notif-auteur">
-                par {{ n.modifie_par }}
+                par {{ n.modifie_par || n.auteur }}
               </span>
             </div>
 
@@ -53,10 +53,7 @@
             </div>
           </div>
 
-          <div
-            v-if="store.notifications.length === 0"
-            class="notif-vide"
-          >
+          <div v-if="store.notifications.length === 0" class="notif-vide">
             Aucune notification
           </div>
         </div>
@@ -67,9 +64,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useNotificationsStore } from '../stores/notifications';
 
 const store = useNotificationsStore();
+const router = useRouter();
+
 const ouvert = ref(false);
 const wrapper = ref(null);
 
@@ -80,6 +80,34 @@ function formaterDate(iso) {
     hour: '2-digit',
     minute: '2-digit'
   });
+}
+
+// 🔥 FORMAT INTELLIGENT
+function formatNotification(n) {
+  if (n.type === 'statut_change') {
+    return `Statut modifié : ${n.ancien_statut} → ${n.nouveau_statut}`;
+  }
+
+  if (n.type === 'nouveau_commentaire') {
+    return `💬 Nouveau commentaire`;
+  }
+
+  if (n.type === 'nouvelle_piece_jointe') {
+    return `📎 Fichier ajouté : ${n.nom_fichier}`;
+  }
+
+  return 'Nouvelle notification';
+}
+
+// 🔥 CLICK → REDIRECTION + MARQUER LU
+function ouvrirNotification(n) {
+  store.marquerLue(n.id);
+
+  if (n.ticket_id) {
+    router.push(`/tickets/${n.ticket_id}`);
+  }
+
+  ouvert.value = false;
 }
 
 function onClickDehors(e) {

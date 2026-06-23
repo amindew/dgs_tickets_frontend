@@ -1,39 +1,79 @@
 import { defineStore } from 'pinia';
-import { io }          from 'socket.io-client';
+import { io } from 'socket.io-client';
+
+const CLE_STORAGE = 'dgs_notifications';
+
+function chargerDepuisStorage() {
+  try {
+    return JSON.parse(localStorage.getItem(CLE_STORAGE) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function sauvegarderDansStorage(notifications) {
+  localStorage.setItem(CLE_STORAGE, JSON.stringify(notifications));
+}
+
 export const useNotificationsStore = defineStore('notifications', {
   state: () => ({
-    notifications: [],
-    socket:        null,
-    connecte:      false,
+    notifications: chargerDepuisStorage(),
+    socket: null,
+    connecte: false,
   }),
+
   getters: {
     nonLues: (state) => state.notifications.filter(n => !n.lue),
-    compteur:(state) => state.notifications.filter(n => !n.lue).length,
+    compteur: (state) => state.notifications.filter(n => !n.lue).length,
   },
+
   actions: {
-    // Connexion au serveur WebSocket
     connecter(userId) {
-      if (this.socket) return; // Deja connecte
+      if (this.socket) return;
+
       this.socket = io(import.meta.env.VITE_API_URL);
+
       this.socket.on('connect', () => {
+        console.log('✅ WebSocket connecté');
         this.connecte = true;
-        // Rejoindre la room de cet utilisateur
         this.socket.emit('rejoindre', userId);
-        console.log('WebSocket connecte');
       });
-      // Recevoir une notification
-      this.socket.on('notification', (data) => {
-        this.notifications.unshift({
-          id:      Date.now(),
-          lue:     false,
-          ...data,
-        });
-      });
+
       this.socket.on('disconnect', () => {
+        console.log('❌ WebSocket déconnecté');
         this.connecte = false;
       });
+
+      // 🔔 Notification de changement de statut
+      this.socket.on('notification', (data) => {
+        console.log('📩 Notification reçue :', data);
+        this.notifications.unshift({
+          id: Date.now(),
+          lue: false,
+          ...data,
+        });
+        sauvegarderDansStorage(this.notifications);
+      });
+
+      // 🔄 Rafraîchir le kanban en temps réel
+      this.socket.on('ticket_mis_a_jour', (data) => {
+        console.log('🔄 Ticket mis à jour', data);
+        window.dispatchEvent(new Event('refreshTickets'));
+      });
+
+      // 💬 Rafraîchir les commentaires en temps réel
+      this.socket.on('commentaire_ajoute', (data) => {
+        console.log('💬 Nouveau commentaire', data);
+        window.dispatchEvent(new Event('refreshCommentaires'));
+      });
+
+      // 📎 Rafraîchir les pièces jointes en temps réel
+      this.socket.on('piece_jointe_ajoutee', (data) => {
+        console.log('📎 Nouvelle pièce jointe', data);
+        window.dispatchEvent(new Event('refreshPieces'));
+      });
     },
-    // Deconnexion propre
+
     deconnecter() {
       if (this.socket) {
         this.socket.disconnect();
@@ -41,14 +81,23 @@ export const useNotificationsStore = defineStore('notifications', {
         this.connecte = false;
       }
     },
-    // Marquer une notification comme lue
+
     marquerLue(id) {
       const n = this.notifications.find(n => n.id === id);
-      if (n) n.lue = true;
+      if (n) {
+        n.lue = true;
+        sauvegarderDansStorage(this.notifications);
+      }
     },
-    // Marquer toutes comme lues
+
     marquerToutesLues() {
       this.notifications.forEach(n => { n.lue = true; });
+      sauvegarderDansStorage(this.notifications);
     },
-  }
+
+    viderNotifications() {
+      this.notifications = [];
+      localStorage.removeItem(CLE_STORAGE);
+    },
+  },
 });
