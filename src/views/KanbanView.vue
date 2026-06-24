@@ -588,4 +588,40 @@ function couleurUser(user) {
 
 .modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .kanban-contenu { padding: 12px 8px; }
+
+  .colonnes {
+    flex-direction: column;
+    gap: 12px;
+    min-height: auto;
+    overflow-x: visible;
+  }
+
+  .colonne {
+    min-width: 0;
+    min-height: auto;
+    max-width: 100%;
+  }
+
+  .zone-depot { min-height: 60px; }
+
+  .drawer {
+    width: 100%;
+    top: 60px;
+  }
+
+  .carte-titre { font-size: 12px; }
+
+  .modal-assign { margin: 16px; max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .colonne-label { font-size: 12px; }
+  .prio-badge    { font-size: 9px; }
+  .carte-client  { max-width: 60px; }
+}
+
 </style>
