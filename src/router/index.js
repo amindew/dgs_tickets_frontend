@@ -24,6 +24,11 @@ const routes = [
   component: () => import('../views/AdminUsers.vue'),
   meta: { requiresAuth: true, roles: ['admin'] }
 },
+{
+  path: '/dashboard',
+  component: () => import('../views/DashboardView.vue'),
+  meta: { requiresAuth: true, roles: ['admin', 'responsable'] }
+},
 ];
 const router = createRouter({ history: createWebHistory(), routes });
 // Guard global : vérifier avant chaque navigation

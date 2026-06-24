@@ -28,17 +28,26 @@
       </router-link>
     </div>
 
-    <!-- Menu desktop -->
-    <div class="liens desktop-only">
-      <router-link to="/kanban">Tableau Kanban</router-link>
-      <router-link
-        v-if="authStore.estAdmin || authStore.estResponsable"
-        to="/tickets/new"
-        class="lien-nouveau"
-      >
-        + Nouveau ticket
-      </router-link>
-    </div>
+    <div class="liens">
+  <router-link to="/kanban">
+    Tableau Kanban
+  </router-link>
+
+  <router-link
+    v-if="authStore.estAdmin || authStore.estResponsable"
+    to="/tickets/new"
+    class="lien-nouveau"
+  >
+    + Nouveau ticket
+  </router-link>
+
+  <router-link
+    v-if="authStore.estAdmin || authStore.estResponsable"
+    to="/dashboard"
+  >
+    Tableau de bord
+  </router-link>
+</div>
 
     <div class="user-info">
       <ClocheNotifications />
