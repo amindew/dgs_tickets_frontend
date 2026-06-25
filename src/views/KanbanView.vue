@@ -13,7 +13,7 @@
     <transition name="drawer-slide">
       <div v-if="drawerOuvert" class="drawer" role="dialog" aria-label="Filtres">
         <div class="drawer-close">
-          <button class="btn-fermer" @click="$emit('update:drawerOuvert', false)" aria-label="Fermer les filtres">
+          <button class="btn-fermer" @click="$emit('update:drawerOuvert', false)">
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
@@ -84,10 +84,6 @@
                     {{ labelsPriorite[element.priorite] || element.priorite }}
                   </span>
                   <span v-if="element.echeance" class="carte-date">
-                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                      <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                      <path d="M4 1v2M8 1v2M1 5h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-                    </svg>
                     {{ formaterDate(element.echeance) }}
                   </span>
                 </div>
@@ -95,10 +91,9 @@
                 <div class="carte-sep"></div>
 
                 <div class="carte-pied">
-                  <!-- Assigné : affiche l'avatar + nom + bouton changer -->
                   <div v-if="element.assigne" class="carte-assigne">
                     <div class="avatar-xs" :style="{ background: couleurUser(element.assigne) }">
-                     {{ initiales(element.assigne) }}
+                      {{ initiales(element.assigne) }}
                     </div>
                     <span class="assigne-nom">{{ element.assigne.nom }}</span>
                     <button
@@ -113,7 +108,6 @@
                     </button>
                   </div>
 
-                  <!-- Non assigné : bouton cliquable -->
                   <button
                     v-else-if="authStore.estAdmin || authStore.estResponsable"
                     class="btn-assigner"
@@ -169,7 +163,7 @@
               :class="{ selectionne: techChoisi === tech.id }"
               @click="techChoisi = tech.id"
             >
-              <div class="tech-avatar" :style="{ background: couleurAvatar(tech.id) }">
+              <div class="tech-avatar" :style="{ background: couleurUser({ id: tech.id }) }">
                 {{ tech.nom.slice(0, 2).toUpperCase() }}
               </div>
               <span class="tech-nom">{{ tech.nom }}</span>
@@ -198,7 +192,6 @@
     <transition name="toast">
       <div v-if="erreurTransition" class="toast-erreur">{{ erreurTransition }}</div>
     </transition>
-
     <transition name="toast">
       <div v-if="toastSucces" class="toast-succes">{{ toastSucces }}</div>
     </transition>
@@ -211,9 +204,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import draggable from 'vuedraggable';
 import { useTicketsStore } from '../stores/tickets';
-import { useAuthStore } from '../stores/auth';
-import BarreFiltres from '../components/Kanban/BarreFiltres.vue';
-import api from '../services/api';
+import { useAuthStore }    from '../stores/auth';
+import BarreFiltres        from '../components/Kanban/BarreFiltres.vue';
+import api                 from '../services/api';
 
 const props = defineProps({
   drawerOuvert: { type: Boolean, default: false },
@@ -258,8 +251,18 @@ const labelsPriorite = {
   basse:    'Basse',
 };
 
-const palette = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#0f172a'];
-function couleurAvatar(id) { return palette[id % palette.length]; }
+// ── Couleurs avatars ──────────────────────────────────────────────────────
+const palette = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#a855f7'];
+
+function hashId(id) {
+  if (!id) return 0;
+  return String(id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+}
+
+function couleurUser(user) {
+  if (!user?.id) return '#1e293b';
+  return palette[hashId(user.id) % palette.length];
+}
 
 function initiales(user) {
   if (!user) return '?';
@@ -292,6 +295,7 @@ function appliquerFiltres(filtres) {
   store.chargerTickets(filtres);
 }
 
+// ── Drag-and-drop ─────────────────────────────────────────────────────────
 async function onChange(event, nouveauStatut) {
   if (!event.added) return;
   const ticket = event.added.element;
@@ -299,7 +303,8 @@ async function onChange(event, nouveauStatut) {
   try {
     await store.changerStatut(ticket.id, nouveauStatut);
   } catch (error) {
-    erreurTransition.value = error.response?.data?.message || 'Transition non autorisée';
+    erreurTransition.value =
+      error.response?.data?.message || 'Transition non autorisée';
     clearTimeout(erreurTimer);
     erreurTimer = setTimeout(() => { erreurTransition.value = ''; }, 4000);
     await store.chargerTickets();
@@ -310,11 +315,11 @@ function voirDetail(id) {
   router.push(`/tickets/${id}`);
 }
 
-// --- Assignation ---
+// ── Assignation ───────────────────────────────────────────────────────────
 async function ouvrirAssignation(ticket) {
   ticketSelectionne.value = ticket;
-  techChoisi.value = ticket.assigne?.id || null;
-  erreurAssign.value = '';
+  techChoisi.value        = ticket.assigne?.id || null;
+  erreurAssign.value      = '';
   modalAssignOuverte.value = true;
 
   if (techniciens.value.length === 0) {
@@ -345,7 +350,7 @@ async function confirmerAssignation() {
     fermerAssignation();
     afficherToast('Ticket assigné avec succès');
   } catch (e) {
-    erreurAssign.value = e.response?.data?.message || 'Erreur lors de l\'assignation';
+    erreurAssign.value = e.response?.data?.message || "Erreur lors de l'assignation";
   } finally {
     assignEnCours.value = false;
   }
@@ -357,6 +362,7 @@ function afficherToast(msg) {
   toastTimer = setTimeout(() => { toastSucces.value = ''; }, 3000);
 }
 
+// ── Clavier ───────────────────────────────────────────────────────────────
 function onKeydown(e) {
   if (e.key === 'Escape') {
     if (modalAssignOuverte.value) { fermerAssignation(); return; }
@@ -366,37 +372,29 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await store.chargerTickets();
-
   window.addEventListener('keydown', onKeydown);
-
-  // ✅ AJOUT ICI
   window.addEventListener('refreshTickets', store.chargerTickets);
 });
 
-
-function couleurUser(user) {
-  if (!user?.id) return '#1e293b'
-  const hash = user.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return palette[hash % palette.length]
-}
-
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('refreshTickets', store.chargerTickets);
+  clearTimeout(erreurTimer);
+  clearTimeout(toastTimer);
+});
 </script>
 
 <style scoped>
 .kanban-page {
-  position: relative;
-  min-height: 100vh;
-  background: var(--bg);
+  position: relative; min-height: 100vh; background: var(--bg);
 }
 
-.overlay {
-  position: fixed; inset: 0;
-  background: rgba(15, 23, 42, 0.35);
-  z-index: 30; cursor: pointer;
-}
+/* Overlay */
+.overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.35); z-index: 30; cursor: pointer; }
 .overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.25s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+.overlay-fade-enter-from,   .overlay-fade-leave-to     { opacity: 0; }
 
+/* Drawer */
 .drawer {
   position: fixed; top: 60px; left: 0; bottom: 0; width: 300px;
   background: white; border-right: 1px solid var(--border);
@@ -407,7 +405,6 @@ function couleurUser(user) {
   transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
 }
 .drawer-slide-enter-from, .drawer-slide-leave-to { transform: translateX(-100%); }
-
 .drawer-close { display: flex; justify-content: flex-end; padding: 10px 12px 0; }
 .btn-fermer {
   background: none; border: none; cursor: pointer;
@@ -416,12 +413,13 @@ function couleurUser(user) {
 }
 .btn-fermer:hover { background: #f1f5f9; color: #1e293b; }
 
+/* Contenu */
 .kanban-contenu { padding: 20px 16px; min-height: 100vh; transition: opacity 0.25s ease; }
 .contenu-dimme  { opacity: 0.5; pointer-events: none; }
 
+/* Colonnes */
 .colonnes {
-  display: flex; gap: 14px;
-  align-items: flex-start;
+  display: flex; gap: 14px; align-items: flex-start;
   min-height: calc(100vh - 100px);
 }
 
@@ -438,7 +436,6 @@ function couleurUser(user) {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
   background: var(--surface); position: sticky; top: 0; z-index: 1;
 }
-
 .colonne-titre { display: flex; align-items: center; gap: 8px; }
 .colonne-accent { width: 3px; height: 16px; border-radius: 2px; flex-shrink: 0; }
 .colonne-label  { font-size: 13px; font-weight: 600; color: var(--ink); }
@@ -448,21 +445,21 @@ function couleurUser(user) {
   border: 1px solid var(--border); min-width: 24px; text-align: center;
 }
 
+/* Zone draggable */
 .zone-depot {
-  flex: 1; padding: 12px;
-  display: flex; flex-direction: column; gap: 10px; min-height: 200px;
+  flex: 1; padding: 12px; display: flex; flex-direction: column;
+  gap: 10px; min-height: 200px;
 }
 
+/* Carte */
 .carte {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 12px 12px 0; cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
 }
 .carte:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
-
 .carte-id    { font-size: 10px; color: var(--ink-soft); font-family: monospace; letter-spacing: 0.3px; margin-bottom: 5px; }
 .carte-titre { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.45; margin-bottom: 10px; }
-
 .carte-meta  { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 
 .prio-badge {
@@ -476,44 +473,32 @@ function couleurUser(user) {
 .prio-normale  { background: #e0f2fe; color: #0369a1; }
 .prio-basse    { background: var(--success-soft);  color: var(--success); }
 
-.carte-date { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: var(--ink-soft); }
-
-.carte-sep { border-top: 2px dashed var(--border); margin: 0 -12px; }
-
+.carte-date { font-size: 10px; color: var(--ink-soft); }
+.carte-sep  { border-top: 2px dashed var(--border); margin: 0 -12px; }
 .carte-pied {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 0 10px;
 }
-
 .carte-assigne { display: flex; align-items: center; gap: 5px; }
-
 .avatar-xs {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--navy); color: white;
+  width: 22px; height: 22px; border-radius: 50%; color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 8px; font-weight: 600; flex-shrink: 0;
 }
-
 .assigne-nom { font-size: 11px; color: var(--ink-soft); }
-
 .btn-changer-assign {
-  background: none; border: none; cursor: pointer;
-  color: var(--ink-soft); padding: 2px; border-radius: 3px;
-  display: flex; align-items: center; opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  background: none; border: none; cursor: pointer; color: var(--ink-soft);
+  padding: 2px; border-radius: 3px; display: flex; align-items: center;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
 }
 .carte:hover .btn-changer-assign { opacity: 1; }
 .btn-changer-assign:hover { color: var(--accent); }
-
 .btn-assigner {
-  font-size: 11px; font-weight: 600;
-  color: var(--accent); background: var(--accent-soft);
-  border: 1px dashed var(--accent); border-radius: 6px;
-  padding: 3px 9px; cursor: pointer;
-  transition: background 0.15s;
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  background: var(--accent-soft); border: 1px dashed var(--accent);
+  border-radius: 6px; padding: 3px 9px; cursor: pointer;
 }
 .btn-assigner:hover { background: #fed7aa; }
-
 .non-assigne  { font-size: 11px; color: var(--ink-soft); font-style: italic; }
 .carte-client {
   font-size: 10px; color: var(--ink-soft);
@@ -525,6 +510,7 @@ function couleurUser(user) {
   gap: 8px; padding: 40px 0; color: var(--border-strong); font-size: 12px;
 }
 
+/* Chargement */
 .chargement { display: flex; gap: 6px; justify-content: center; padding: 80px 0; }
 .chargement-dot {
   width: 8px; height: 8px; border-radius: 50%;
@@ -539,92 +525,57 @@ function couleurUser(user) {
 
 /* Modale assignation */
 .modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(15,23,42,0.45);
-  z-index: 100;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  position: fixed; inset: 0; background: rgba(15,23,42,0.45);
+  z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px;
 }
-
-.modal-assign {
-  width: 100%; max-width: 380px; padding: 24px;
-  border-radius: var(--radius-md);
-}
-
-.modal-header {
-  display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px;
-}
-
-.modal-eyebrow {
-  font-size: 10px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--accent); margin-bottom: 2px;
-}
-
-.modal-titre { font-size: 16px; font-weight: 700; color: var(--ink); }
-
-.modal-ticket-titre {
-  font-size: 13px; color: var(--ink-soft);
-  margin-bottom: 18px; line-height: 1.4;
-}
-
+.modal-assign  { width: 100%; max-width: 380px; padding: 24px; border-radius: var(--radius-md); }
+.modal-header  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.modal-eyebrow { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 2px; }
+.modal-titre   { font-size: 16px; font-weight: 700; color: var(--ink); }
+.modal-ticket-titre { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.4; }
 .techs-loading { font-size: 13px; color: var(--ink-soft); padding: 16px 0; text-align: center; }
-
-.techs-liste { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 280px; overflow-y: auto; }
-
+.techs-liste   { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 280px; overflow-y: auto; }
 .tech-item {
   display: flex; align-items: center; gap: 10px;
   background: none; border: 1px solid var(--border);
   border-radius: 10px; padding: 10px 12px; cursor: pointer;
   transition: all 0.15s; text-align: left;
 }
-.tech-item:hover { border-color: var(--accent); background: var(--accent-soft); }
-.tech-item.selectionne { border-color: var(--accent); background: var(--accent-soft); }
-
+.tech-item:hover, .tech-item.selectionne { border-color: var(--accent); background: var(--accent-soft); }
 .tech-avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  color: white; font-size: 11px; font-weight: 700;
+  width: 32px; height: 32px; border-radius: 50%; color: white;
+  font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-
-.tech-nom { flex: 1; font-size: 13px; font-weight: 500; color: var(--ink); }
-
-.check { color: var(--accent); flex-shrink: 0; }
-
-.modal-footer {
-  display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;
+.tech-nom  { flex: 1; font-size: 13px; font-weight: 500; color: var(--ink); }
+.check     { color: var(--accent); flex-shrink: 0; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.btn-annuler  {
+  background: white; border: 1px solid var(--border); color: var(--ink-soft);
+  border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
 }
-
-.btn-annuler {
-  background: white; border: 1px solid var(--border);
-  color: var(--ink-soft); border-radius: 10px;
-  padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
-}
-
 .btn-confirmer {
   background: var(--accent); color: white; border: none;
-  border-radius: 10px; padding: 9px 18px;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: background 0.15s;
+  border-radius: 10px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .btn-confirmer:hover:not(:disabled) { background: #ea580c; }
 .btn-confirmer:disabled { opacity: 0.5; cursor: not-allowed; }
+.message-erreur { background: var(--danger-soft); color: var(--danger); padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
 
 /* Toasts */
-.toast-erreur {
+.toast-erreur, .toast-succes {
   position: fixed; bottom: 24px; right: 24px;
-  background: var(--danger); color: white;
   padding: 12px 16px; border-radius: var(--radius-sm);
   font-size: 13px; font-weight: 500; max-width: 320px;
-  box-shadow: var(--shadow-md); z-index: 999;
+  box-shadow: var(--shadow-md); z-index: 999; color: white;
 }
-.toast-succes {
-  position: fixed; bottom: 24px; right: 24px;
-  background: var(--success); color: white;
-  padding: 12px 16px; border-radius: var(--radius-sm);
-  font-size: 13px; font-weight: 500; max-width: 320px;
-  box-shadow: var(--shadow-md); z-index: 999;
-}
+.toast-erreur { background: var(--danger); }
+.toast-succes { background: var(--success); }
 .toast-enter-active, .toast-leave-active { transition: all 0.25s ease; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(8px); }
+.toast-enter-from,   .toast-leave-to     { opacity: 0; transform: translateY(8px); }
+.modal-enter-active, .modal-leave-active  { transition: all 0.2s ease; }
+.modal-enter-from,   .modal-leave-to      { opacity: 0; }
+
 
 .modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
@@ -662,6 +613,38 @@ function couleurUser(user) {
 
   100% {
     opacity: 1;
+  }
+}
+
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .kanban-contenu { padding: 12px 10px; overflow-x: auto; }
+  .colonnes {
+    flex-direction: row; flex-wrap: nowrap; gap: 10px;
+    overflow-x: auto; padding-bottom: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .colonne {
+    flex: 0 0 80vw; max-width: 80vw;
+    min-width: 260px; min-height: 60vh;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 600px) {
+  .colonne { flex: 0 0 88vw; max-width: 88vw; }
+  .drawer  { width: 100%; top: 60px; }
+  .carte-titre { font-size: 12px; }
+  .modal-assign { max-width: calc(100vw - 32px); margin: 16px; }
+  .toast-erreur, .toast-succes { right: 12px; left: 12px; max-width: 100%; }
+
+  /* Modale depuis le bas sur mobile */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-assign  {
+    max-width: 100%; border-radius: 16px 16px 0 0;
+    padding: 20px 16px 32px; max-height: 85vh; overflow-y: auto;
   }
 }
 
