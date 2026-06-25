@@ -64,7 +64,8 @@ export const useNotificationsStore = defineStore('notifications', {
       // 💬 Rafraîchir les commentaires en temps réel
       this.socket.on('commentaire_ajoute', (data) => {
         console.log('💬 Nouveau commentaire', data);
-        window.dispatchEvent(new Event('refreshCommentaires'));
+        // Dispatcher avec le détail pour que FilCommentaires puisse l'ajouter directement
+        window.dispatchEvent(new CustomEvent('nouveauCommentaire', { detail: data }));
       });
 
       // 📎 Rafraîchir les pièces jointes en temps réel
