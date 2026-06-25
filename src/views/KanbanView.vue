@@ -48,12 +48,35 @@
             @change="onChange($event, statut)"
           >
             <template #item="{ element }">
-              <div class="carte" @click="voirDetail(element.id)">
+              
+              <div
+  class="carte"
+  :class="{
+    'carte-critique-retard':
+      statut === 'a_faire' &&
+      estCritiqueEnRetard(element)
+  }"
+  @click="voirDetail(element.id)"
+>
+   
+
                 <div class="carte-id">{{ element.reference || `INC-${String(element.id).padStart(6,'0')}` }}</div>
                 <div class="carte-titre">{{ element.titre }}</div>
-
                 <div class="carte-meta">
-                  <span class="prio-badge" :class="`prio-${element.priorite}`">
+
+
+<span
+  class="prio-badge"
+  :class="[
+    `prio-${element.priorite}`,
+    {
+      'badge-clignotant':
+        statut === 'a_faire' &&
+        estCritiqueEnRetard(element)
+    }
+  ]"
+>
+
                     <svg v-if="element.priorite === 'critique'" width="9" height="9" viewBox="0 0 12 12" fill="none">
                       <path d="M6 2v4M6 8.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                       <path d="M1 10.5h10L6 1.5 1 10.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
@@ -246,6 +269,23 @@ function initiales(user) {
 function formaterDate(iso) {
   if (!iso) return '';
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+function estCritiqueEnRetard(ticket) {
+  if (ticket.priorite !== 'critique') return false;
+
+  if (ticket.assigne) return false;
+
+  const dateCreation =
+    ticket.createdAt ||
+    ticket.created_at ||
+    ticket.date_creation;
+
+  if (!dateCreation) return false;
+
+  const diffMinutes =
+    (Date.now() - new Date(dateCreation).getTime()) / 60000;
+
+  return diffMinutes >= 15;
 }
 
 function appliquerFiltres(filtres) {
@@ -588,4 +628,41 @@ function couleurUser(user) {
 
 .modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
+.carte-critique-retard {
+  border: 2px solid #ef4444;
+  animation: pulseCritique 1s infinite;
+}
+
+.badge-clignotant {
+  animation: blinkCritique 0.8s infinite;
+}
+
+@keyframes pulseCritique {
+  0% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.9);
+  }
+
+  100% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes blinkCritique {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
 </style>
