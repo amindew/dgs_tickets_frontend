@@ -16,6 +16,7 @@
 
         <div class="infos-grid">
           <div><label>Client</label><p>{{ ticket.client_nom }}</p></div>
+          <div><label>Téléphone client</label><p>{{ ticket.client_telephone || '—' }}</p></div>
           <div><label>Assigné à</label><p>{{ ticket.assigne?.nom || 'Non assigné' }}</p></div>
           <div><label>Créé par</label><p>{{ ticket.createur?.nom || 'Inconnu' }}</p></div>
           <div><label>Ouvert le</label><p>{{ formatDate(ticket.ouvert_le) }}</p></div>
@@ -38,8 +39,14 @@
 
       <!-- Historique -->
       <div class="card-surface timeline-block" v-if="historique.length">
-        <h3>Historique des statuts</h3>
-        <div class="timeline">
+        <button class="btn-historique" @click="historiqueOuvert = !historiqueOuvert">
+          <span>Historique des statuts ({{ historique.length }})</span>
+          <svg :class="['chevron', { ouvert: historiqueOuvert }]" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 5l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div v-if="historiqueOuvert" class="timeline">
           <div class="timeline-item" v-for="h in historique" :key="h.id">
             <div class="circle"></div>
             <div class="content">
@@ -83,6 +90,7 @@ const route      = useRoute();
 const ticket     = ref(null);
 const historique = ref([]);
 const sla        = ref(null);
+const historiqueOuvert = ref(false);
 
 const labelsStatut = {
   a_faire: 'À faire', en_cours: 'En cours', bloque: 'Bloqué', resolu: 'Résolu',
@@ -167,9 +175,37 @@ h2 { font-size: 20px; font-weight: 700; color: var(--ink); margin: 6px 0 10px; }
 .sla-alerte { color: #dc2626; font-size: 12px; font-weight: 600; margin-top: 6px; }
 .sla-ok     { color: #16a34a; font-size: 12px; margin-top: 6px; }
 
-/* Timeline */
-.timeline-block h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
-.timeline { display: flex; flex-direction: column; gap: 10px; }
+/* Historique accordion */
+.timeline-block { padding: 0; overflow: hidden; }
+
+.btn-historique {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.btn-historique:hover { background: var(--bg); }
+
+.chevron {
+  transition: transform 0.25s ease;
+  color: var(--ink-soft);
+}
+.chevron.ouvert { transform: rotate(180deg); }
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px 16px;
+}
 .timeline-item { display: flex; gap: 10px; }
 .circle { width: 10px; height: 10px; background: #6366f1; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
 .content { background: var(--bg); padding: 10px 12px; border-radius: 8px; flex: 1; }

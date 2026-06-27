@@ -312,6 +312,7 @@ async function onChange(event, nouveauStatut) {
 }
 
 function voirDetail(id) {
+  console.log('click', id);
   router.push(`/tickets/${id}`);
 }
 
