@@ -29,6 +29,10 @@ const routes = [
   component: () => import('../views/DashboardView.vue'),
   meta: { requiresAuth: true, roles: ['admin', 'responsable'] }
 },
+{
+  path: '/definir-mot-de-passe/:token',
+  component: () => import('../views/Definirmotdepasse.vue')
+}
 ];
 const router = createRouter({ history: createWebHistory(), routes });
 // Guard global : vérifier avant chaque navigation
@@ -42,6 +46,5 @@ router.beforeEach((to, from, next) => {
     next(); // OK : laisser passer
   }
 });
-
 
 export default router; 
