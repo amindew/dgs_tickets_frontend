@@ -16,6 +16,11 @@
 
         <div class="infos-grid">
           <div><label>Client</label><p>{{ ticket.client_nom }}</p></div>
+           <div>
+    <label>Téléphone</label>
+    <p>{{ ticket.client_telephone }}</p>
+  </div>
+
           <div><label>Assigné à</label><p>{{ ticket.assigne?.nom || 'Non assigné' }}</p></div>
           <div><label>Créé par</label><p>{{ ticket.createur?.nom || 'Inconnu' }}</p></div>
           <div><label>Ouvert le</label><p>{{ formatDate(ticket.ouvert_le) }}</p></div>

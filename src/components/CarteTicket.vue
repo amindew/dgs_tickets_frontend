@@ -34,6 +34,7 @@ import { computed } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { useTicketsStore } from '../../stores/tickets';
 
+
 const props = defineProps({
   ticket: Object,
   techniciens: Array,

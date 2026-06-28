@@ -24,6 +24,21 @@
           <option value="critique">Critique</option>
         </select>
       </div>
+      <div class="champ">
+  <label>Date limite de résolution <span class="optionnel">(optionnel)</span></label>
+ <input
+  type="datetime-local"
+  v-model="form.date_limite_resolution"
+  :disabled="!form.assigne_id"
+/>
+
+<span
+  v-if="!form.assigne_id"
+  class="hint-info"
+>
+  Assignez d'abord un technicien pour pouvoir définir une date limite de résolution.
+</span>
+</div>
 
       <div class="grille-2">
         <div class="champ">
@@ -76,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTicketsStore } from '../stores/tickets';
 import api from '../services/api';
@@ -97,8 +112,24 @@ const form = ref({
   client_nom: '',
   client_email: '',
   client_telephone: '',
-  assigne_id: ''
+  assigne_id: '',
+    date_limite_resolution: ''
+
 });
+watch(
+  () => form.value.assigne_id,
+  (nouveau) => {
+    if (!nouveau) {
+      form.value.date_limite_resolution = '';
+    }
+  }
+);
+const normaliserTelephone = (tel) => {
+  return tel
+    .replace(/\s/g, '')
+    .replace(/^\+221/, '')
+    .replace(/^00221/, '');
+};
 
 function validerEmailClient() {
   if (!form.value.client_email) { emailClientInvalide.value = false; return }
@@ -108,17 +139,28 @@ function validerEmailClient() {
 
 const soumettre = async () => {
   erreur.value = '';
+  if (
+  form.value.date_limite_resolution &&
+  !form.value.assigne_id
+) {
+  erreur.value =
+    "Vous devez assigner un technicien avant de définir une date limite de résolution.";
+  return;
+}
 
   if (!form.value.titre || !form.value.client_nom || !form.value.client_telephone) {
     erreur.value = 'Tous les champs marqués * sont obligatoires';
     return;
   }
 
-  const phoneRegex = /^(77|76|78|70|75)[0-9]{7}$/;
-  if (!phoneRegex.test(form.value.client_telephone)) {
-    erreur.value = 'Numéro invalide (ex: 771234567)';
-    return;
-  }
+ const tel = normaliserTelephone(form.value.client_telephone);
+
+const phoneRegex = /^(77|76|78|70|75)[0-9]{7}$/;
+
+if (!phoneRegex.test(tel)) {
+  erreur.value = 'Numéro invalide (ex: 771234567 ou +221771234567)';
+  return;
+}
 
   if (form.value.client_email) {
     validerEmailClient();
@@ -129,8 +171,10 @@ const soumettre = async () => {
   try {
     const data = {
       ...form.value,
+      client_telephone: tel,
       client_email: form.value.client_email || null,
-      assigne_id:   form.value.assigne_id   || null
+      assigne_id: form.value.assigne_id || null,
+      date_limite_resolution: form.value.date_limite_resolution || null
     };
     await store.creerTicket(data);
     router.push('/kanban');
@@ -199,5 +243,10 @@ onMounted(async () => {
 
 @media (max-width: 480px) {
   .grille-2 { grid-template-columns: 1fr; }
+}
+input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 </style>

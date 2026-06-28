@@ -51,12 +51,15 @@
               
               <div
   class="carte"
-  :class="{
+  ::class="[
+  niveauSLA(element, statut),
+  {
     'carte-critique-retard':
       statut === 'a_faire' &&
       estCritiqueEnRetard(element)
-  }"
-  @click="voirDetail(element.id)"
+  }
+]"
+ @click="voirDetail(element.id)"
 >
    
 
@@ -83,6 +86,13 @@
                     </svg>
                     {{ labelsPriorite[element.priorite] || element.priorite }}
                   </span>
+<span
+  v-if="texteSLA(element, statut)"
+  class="sla-badge"
+  :class="niveauSLA(element, statut)"
+>
+  {{ texteSLA(element, statut) }}
+</span>
                   <span v-if="element.echeance" class="carte-date">
                     {{ formaterDate(element.echeance) }}
                   </span>
@@ -200,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import draggable from 'vuedraggable';
 import { useTicketsStore } from '../stores/tickets';
@@ -228,6 +238,8 @@ const assignEnCours      = ref(false);
 const erreurAssign       = ref('');
 let erreurTimer = null;
 let toastTimer  = null;
+const maintenant = ref(Date.now());
+let timerSLA = null;
 
 const labelsStatut = {
   a_faire:  'À faire',
@@ -290,6 +302,54 @@ function estCritiqueEnRetard(ticket) {
 
   return diffMinutes >= 15;
 }
+function niveauSLA(ticket, statut) {
+  if (!ticket.date_limite_resolution) return "";
+
+  // Les tickets déjà résolus n'ont pas d'alerte SLA
+  if (statut === "resolu") return "";
+
+  const diff =
+    new Date(ticket.date_limite_resolution).getTime() - Date.now();
+
+  if (diff <= 0) return "carte-sla-depasse";
+  if (diff <= 15 * 60 * 1000) return "carte-sla-15";
+  if (diff <= 30 * 60 * 1000) return "carte-sla-30";
+  if (diff <= 60 * 60 * 1000) return "carte-sla-60";
+
+  return "";
+}
+function texteSLA(ticket, statut) {
+  if (!ticket.date_limite_resolution) return "";
+
+  if (statut === "resolu") return "";
+
+  const diff =
+    new Date(ticket.date_limite_resolution).getTime() - maintenant.value;
+
+  if (diff <= 0) {
+    const retard = Math.floor(Math.abs(diff) / 60000);
+
+    if (retard < 60) {
+      return `⚠ Dépassé de ${retard} min`;
+    }
+
+    const heures = Math.floor(retard / 60);
+    const minutes = retard % 60;
+
+    return `⚠ Dépassé de ${heures}h ${minutes}min`;
+  }
+
+  const minutes = Math.floor(diff / 60000);
+
+  if (minutes >= 60) {
+    const heures = Math.floor(minutes / 60);
+    const reste = minutes % 60;
+
+    return `⏳ ${heures}h ${reste}min`;
+  }
+
+  return `⏳ ${minutes} min`;
+}
 
 function appliquerFiltres(filtres) {
   store.chargerTickets(filtres);
@@ -312,6 +372,7 @@ async function onChange(event, nouveauStatut) {
 }
 
 function voirDetail(id) {
+  console.log('click', id);
   router.push(`/tickets/${id}`);
 }
 
@@ -371,6 +432,9 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+timerSLA = setInterval(() => {
+  maintenant.value = Date.now();
+}, 60000);
   await store.chargerTickets();
   window.addEventListener('keydown', onKeydown);
   window.addEventListener('refreshTickets', store.chargerTickets);
@@ -381,6 +445,7 @@ onUnmounted(() => {
   window.removeEventListener('refreshTickets', store.chargerTickets);
   clearTimeout(erreurTimer);
   clearTimeout(toastTimer);
+  clearInterval(timerSLA);
 });
 </script>
 
@@ -646,6 +711,74 @@ onUnmounted(() => {
     max-width: 100%; border-radius: 16px 16px 0 0;
     padding: 20px 16px 32px; max-height: 85vh; overflow-y: auto;
   }
+}
+/* ===================== SLA ===================== */
+
+/* moins d'une heure */
+.carte-sla-60{
+  border:2px solid #facc15 !important;
+}
+
+/* moins de 30 minutes */
+.carte-sla-30{
+  border:2px solid #fb923c !important;
+}
+
+/* moins de 15 minutes */
+.carte-sla-15{
+  border:2px solid #800020 !important;
+}
+
+/* délai dépassé */
+.carte-sla-depasse{
+  border:2px solid #dc2626 !important;
+  animation: clignotementSLA 1s infinite;
+}
+
+@keyframes clignotementSLA{
+
+  0%{
+    border-color:#dc2626;
+    box-shadow:0 0 0 rgba(220,38,38,0);
+  }
+
+  50%{
+    border-color:#ff3b3b;
+    box-shadow:0 0 18px rgba(220,38,38,.9);
+  }
+
+  100%{
+    border-color:#dc2626;
+    box-shadow:0 0 0 rgba(220,38,38,0);
+  }
+
+}
+.sla-badge{
+  font-size:10px;
+  font-weight:700;
+  padding:3px 8px;
+  border-radius:999px;
+  border:1px solid transparent;
+}
+
+.sla-badge.carte-sla-60{
+  background:#fef9c3;
+  color:#a16207;
+}
+
+.sla-badge.carte-sla-30{
+  background:#ffedd5;
+  color:#c2410c;
+}
+
+.sla-badge.carte-sla-15{
+  background:#fce7f3;
+  color:#800020;
+}
+
+.sla-badge.carte-sla-depasse{
+  background:#fee2e2;
+  color:#b91c1c;
 }
 
 </style>
