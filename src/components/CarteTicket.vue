@@ -1,5 +1,5 @@
-<template>
-  <div :class="['carte', `priorite-${ticket.priorite}`]">
+﻿<template>
+  <div :class="['carte', `priorite-${ticket.priorite}`]" @click="voirDetail">
     <div class="carte-header">
       <span class="reference mono">{{ ticket.reference }}</span>
       <span :class="['tag', ticket.priorite]">{{ ticket.priorite }}</span>
@@ -31,6 +31,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import { useTicketsStore } from '../../stores/tickets';
 
@@ -40,12 +41,17 @@ const props = defineProps({
   techniciens: Array,
 });
 
-const authStore = useAuthStore();
+const authStore    = useAuthStore();
 const ticketsStore = useTicketsStore();
+const router       = useRouter();
 
 const peutAssigner = computed(() =>
   authStore.estAdmin || authStore.estResponsable
 );
+
+function voirDetail() {
+  router.push(`/tickets/${props.ticket.id}`);
+}
 
 function initiale(nom) {
   return nom ? nom.trim().charAt(0).toUpperCase() : '?';
@@ -53,11 +59,7 @@ function initiale(nom) {
 
 async function assignerRapide(assigneId) {
   if (!assigneId) return;
-
-  await ticketsStore.assignerTicket(
-    props.ticket.id,
-    assigneId
-  );
+  await ticketsStore.assignerTicket(props.ticket.id, assigneId);
 }
 </script>
 
@@ -68,7 +70,7 @@ async function assignerRapide(assigneId) {
   border-radius: var(--radius-md);
   padding: 14px 14px 12px;
   margin-bottom: 10px;
-  cursor: grab;
+  cursor: pointer;
   transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
   border-left: 4px solid var(--border-strong);
 }

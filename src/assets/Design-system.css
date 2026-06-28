@@ -1,8 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-
-  /* Palette moderne */
   --ink: #0f172a;
   --ink-soft: #64748b;
 
@@ -27,207 +25,303 @@
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
 
-  /* Typographie */
   --font-display: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'Inter', sans-serif;
 
-  /* Radius */
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
 
-  /* Ombres modernes */
-  --shadow-sm:
-    0 1px 2px rgba(15,23,42,.04);
-
-  --shadow-md:
-    0 10px 30px rgba(15,23,42,.08);
-
-  --shadow-lg:
-    0 20px 50px rgba(15,23,42,.12);
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md: 0 10px 30px rgba(15,23,42,.08);
+  --shadow-lg: 0 20px 50px rgba(15,23,42,.12);
 }
 
-*{
-  box-sizing:border-box;
+/* ============================================
+   MODE SOMBRE — corrections completes
+   ============================================ */
+body.dark {
+  --ink: #e2e8f0;
+  --ink-soft: #94a3b8;
+
+  --bg: #0d1117;
+  --surface: #161b22;
+
+  /* NAVBAR : reste sombre */
+  --navy: #0d1117;
+  --navy-soft: #161b22;
+
+  --accent: #fb923c;
+  --accent-soft: #2d1800;
+
+  --danger: #f87171;
+  --danger-soft: #2d0808;
+
+  --warning: #fbbf24;
+  --warning-soft: #2d1800;
+
+  --success: #34d399;
+  --success-soft: #052e1c;
+
+  /* BORDURES : visibles en mode sombre */
+  --border: #30363d;
+  --border-strong: #484f58;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-md: 0 10px 30px rgba(0,0,0,.4);
+  --shadow-lg: 0 20px 50px rgba(0,0,0,.5);
 }
 
-html,
-body{
-  margin:0;
-  padding:0;
+/* ============================================
+   NUANCES SUPPLEMENTAIRES
+   ============================================ */
+:root {
+  --ink-muted: #94a3b8;
+  --ink-xsoft: #475569;
+
+  --accent-hover: #ea580c;
+  --accent-light: #fdba74;
+
+  --surface-raised: #f1f5f9;
+  --surface-sunken: #f8fafc;
+
+  --info: #3b82f6;
+  --info-soft: #eff6ff;
 }
 
-body{
-  background:var(--bg);
-  color:var(--ink);
-  font-family:var(--font-body);
-  font-size:14px;
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
+body.dark {
+  --ink-muted: #6e7681;
+  --ink-xsoft: #8b949e;
+
+  --accent-hover: #f97316;
+  --accent-light: #c2410c;
+
+  --surface-raised: #1c2128;
+  --surface-sunken: #0d1117;
+
+  --info: #60a5fa;
+  --info-soft: #0d1f3c;
 }
 
-h1,
-h2,
-h3,
-h4{
-  font-family:var(--font-display);
-  margin:0;
-  color:var(--ink);
-  font-weight:700;
+/* ============================================
+   BASE
+   ============================================ */
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background .3s ease, color .3s ease;
 }
 
-button{
-  font-family:inherit;
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
 }
 
-a{
-  color:inherit;
-  text-decoration:none;
+button { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+.mono { font-family: var(--font-body); }
+
+/* ============================================
+   BOUTONS
+   ============================================ */
+.btn {
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: .25s ease;
+  font-weight: 600;
+}
+.btn:hover { transform: translateY(-2px); }
+
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #ea580c; }
+
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
+}
+body.dark .btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink-soft);
 }
 
-.mono{
-  font-family:var(--font-body);
+/* ============================================
+   BADGES / TAGS
+   ============================================ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
 }
 
-.btn{
-  border:none;
-  border-radius:12px;
-  cursor:pointer;
-  transition:.25s ease;
-  font-weight:600;
+.tag.basse, .tag.resolu {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.tag.moyenne, .tag.en_cours {
+  background: var(--warning-soft);
+  color: #a16207;
+}
+body.dark .tag.moyenne,
+body.dark .tag.en_cours { color: #fbbf24; }
+
+.tag.critique, .tag.bloque {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.tag.a_faire {
+  background: #e2e8f0;
+  color: #475569;
+}
+body.dark .tag.a_faire {
+  background: #1e293b;
+  color: #94a3b8;
 }
 
-.btn:hover{
-  transform:translateY(-2px);
-}
+/* ============================================
+   INPUTS
+   ============================================ */
+.champ { margin-bottom: 20px; }
 
-.btn-primary{
-  background:var(--accent);
-  color:white;
-}
-
-.btn-primary:hover{
-  background:#ea580c;
-}
-
-.btn-secondary{
-  background:white;
-  border:1px solid var(--border);
-  color:var(--ink-soft);
-}
-
-/* Badges */
-
-.tag{
-  display:inline-flex;
-  align-items:center;
-
-  padding:5px 10px;
-
-  border-radius:999px;
-
-  font-size:11px;
-
-  font-weight:700;
-
-  text-transform:uppercase;
-
-  letter-spacing:.04em;
-}
-
-.tag.basse,
-.tag.resolu{
-  background:var(--success-soft);
-  color:var(--success);
-}
-
-.tag.moyenne,
-.tag.en_cours{
-  background:var(--warning-soft);
-  color:#a16207;
-}
-
-.tag.critique,
-.tag.bloque{
-  background:var(--danger-soft);
-  color:var(--danger);
-}
-
-.tag.a_faire{
-  background:#e2e8f0;
-  color:#475569;
-}
-
-/* Inputs */
-
-.champ{
-  margin-bottom:20px;
-}
-
-.champ label{
-  display:block;
-  margin-bottom:6px;
-  color:var(--ink-soft);
-  font-size:13px;
-  font-weight:600;
+.champ label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .champ input,
 .champ textarea,
-.champ select{
+.champ select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);   /* plus de 'white' en dur */
+  color: var(--ink);
+  font-size: 14px;
+  transition: .2s ease;
+}
 
-  width:100%;
-
-  padding:12px 14px;
-
-  border-radius:12px;
-
-  border:1px solid var(--border);
-
-  background:white;
-
-  font-size:14px;
-
-  transition:.2s ease;
+body.dark .champ input,
+body.dark .champ textarea,
+body.dark .champ select {
+  background: var(--surface-raised);
+  color: var(--ink);
+  border-color: var(--border);
 }
 
 .champ input:focus,
 .champ textarea:focus,
-.champ select:focus{
-
-  outline:none;
-
-  border-color:var(--accent);
-
-  box-shadow:
-      0 0 0 4px rgba(249,115,22,.15);
+.champ select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(249,115,22,.15);
 }
 
-/* Cards */
-
-.card-surface{
-
-  background:white;
-
-  border-radius:24px;
-
-  border:1px solid var(--border);
-
-  box-shadow:
-      0 2px 6px rgba(0,0,0,.03),
-      0 12px 30px rgba(0,0,0,.04);
+/* ============================================
+   CARDS
+   ============================================ */
+.card-surface {
+  background: var(--surface);   /* plus de 'white' en dur */
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.03), 0 12px 30px rgba(0,0,0,.04);
 }
 
-.message-erreur{
-
-  background:var(--danger-soft);
-
-  color:var(--danger);
-
-  padding:12px 14px;
-
-  border-radius:12px;
-
-  font-weight:600;
+body.dark .card-surface {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2), 0 12px 30px rgba(0,0,0,.3);
 }
+
+/* ============================================
+   DASHBOARD — cartes KPI en mode sombre
+   ============================================ */
+body.dark .kpi-carte.bleu   { background: #0d1f3c; color: #93c5fd; }
+body.dark .kpi-carte.vert   { background: #052e1c; color: #6ee7b7; }
+body.dark .kpi-carte.orange { background: #2d1800; color: #fdba74; }
+body.dark .kpi-carte.rouge  { background: #2d0808; color: #fca5a5; }
+body.dark .kpi-carte.violet { background: #1e0a3c; color: #c4b5fd; }
+body.dark .kpi-carte.gris   { background: #1c2128; color: #94a3b8; }
+
+body.dark .kpi-valeur { color: var(--ink); }
+body.dark .kpi-label  { color: var(--ink-soft); }
+
+/* ============================================
+   TABLEAU (AdminUsers) en mode sombre
+   ============================================ */
+body.dark .table th {
+  background: var(--surface-raised);
+  color: var(--ink-soft);
+  border-color: var(--border);
+}
+body.dark .table td {
+  border-color: var(--border);
+  color: var(--ink);
+}
+body.dark .table tr:hover td { background: var(--surface-raised); }
+
+/* ============================================
+   FILTRES DRAWER en mode sombre
+   ============================================ */
+body.dark .panneau-filtres { background: var(--surface); }
+body.dark .quick-filtre    { color: var(--ink); }
+body.dark .quick-filtre:hover { background: var(--surface-raised); }
+body.dark .quick-filtre.actif {
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+
+/* ============================================
+   COMMENTAIRES en mode sombre
+   ============================================ */
+body.dark .commentaire       { background: var(--surface-raised); }
+body.dark .commentaire.mien  { background: #1e2d40; }
+
+/* ============================================
+   SLA en mode sombre
+   ============================================ */
+body.dark .sla-bloc         { background: var(--success-soft); }
+body.dark .sla-bloc.depasse { background: var(--danger-soft); border-color: var(--danger); }
+
+/* ============================================
+   MESSAGES D'ERREUR
+   ============================================ */
+.message-erreur {
+  background: var(--danger-soft);
+  color: var(--danger);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* ============================================
+   SCROLLBAR en mode sombre
+   ============================================ */
+body.dark ::-webkit-scrollbar       { width: 6px; }
+body.dark ::-webkit-scrollbar-track { background: var(--surface); }
+body.dark ::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+body.dark ::-webkit-scrollbar-thumb:hover { background: #6e7681; }

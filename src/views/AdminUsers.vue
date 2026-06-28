@@ -116,7 +116,7 @@
       <div v-if="modalOuverte" class="modal-overlay" @click.self="fermerModal">
         <div class="modal card-surface">
           <div class="modal-header">
-            <h2 class="modal-titre">Nouvel utilisateur</h2>
+            <h2 class="modal-titre">Inviter un utilisateur</h2>
             <button class="btn-fermer" @click="fermerModal">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -124,6 +124,7 @@
             </button>
           </div>
           <div v-if="erreurModal" class="message-erreur">{{ erreurModal }}</div>
+          <p class="info-invitation">Un email sera envoyé à cette adresse avec un lien pour définir le mot de passe.</p>
           <div class="champ">
             <label>Nom complet</label>
             <input v-model="form.nom" type="text" placeholder="Ex : Amadou Diallo" />
@@ -133,11 +134,7 @@
             <input v-model="form.email" type="email" placeholder="amadou@dgs.sn" :class="{ 'input-erreur': emailInvalide }" @blur="validerEmail" />
             <span v-if="emailInvalide" class="hint-erreur">Format invalide</span>
           </div>
-          <div class="champ">
-            <label>Mot de passe</label>
-            <input v-model="form.mot_de_passe" type="password" placeholder="Min. 8 caractères, 1 chiffre, 1 majuscule" :class="{ 'input-erreur': mdpInvalide }" @blur="validerMdp" />
-            <span v-if="mdpInvalide" class="hint-erreur">{{ mdpHint }}</span>
-          </div>
+
           <div class="champ">
             <label>Rôle</label>
             <select v-model="form.role">
@@ -149,7 +146,7 @@
           <div class="modal-footer">
             <button class="btn-secondary btn" @click="fermerModal">Annuler</button>
             <button class="btn-primary btn" :disabled="creation" @click="creerUtilisateur">
-              {{ creation ? 'Création...' : 'Créer' }}
+              {{ creation ? 'Envoi...' : 'Envoyer l\'invitation' }}
             </button>
           </div>
         </div>
@@ -273,7 +270,7 @@ async function charger() {
 }
 
 function ouvrirCreation() {
-  form.value = { nom: '', email: '', mot_de_passe: '', role: 'technicien' }
+  form.value = { nom: '', email: '', role: 'technicien' }
   erreurModal.value = ''
   emailInvalide.value = false
   mdpInvalide.value = false
@@ -302,18 +299,16 @@ async function confirmerRole() {
 async function creerUtilisateur() {
   erreurModal.value = ''
   validerEmail()
-  validerMdp()
 
-  if (!form.value.nom || !form.value.email || !form.value.mot_de_passe) {
-    erreurModal.value = 'Tous les champs sont obligatoires'
+  if (!form.value.nom || !form.value.email) {
+    erreurModal.value = 'Nom et email sont obligatoires'
     return
   }
   if (emailInvalide.value) { erreurModal.value = 'Email invalide'; return }
-  if (mdpInvalide.value)   { erreurModal.value = mdpHint.value; return }
 
   creation.value = true
   try {
-    await api.post('/users', form.value)
+    await api.post('/auth/inviter', { nom: form.value.nom, email: form.value.email, role: form.value.role })
     fermerModal()
     await charger()
     afficherToast('Utilisateur créé avec succès')
@@ -426,6 +421,7 @@ onMounted(charger)
 .btn-fermer { background: none; border: none; cursor: pointer; color: var(--ink-soft); padding: 4px; border-radius: 4px; display: flex; }
 .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .input-erreur { border-color: var(--danger) !important; }
+.info-invitation { font-size: 12px; color: var(--ink-soft); background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 4px; border-left: 3px solid var(--accent); }
 .hint-erreur { font-size: 11px; color: var(--danger); margin-top: 2px; display: block; }
 
 .toast-succes { position: fixed; bottom: 24px; right: 24px; background: var(--success); color: white; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); z-index: 200; }

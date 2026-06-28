@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: () => import('../views/LoginView.vue') },
   {
     path: '/kanban',
     component: () => import('../views/KanbanView.vue'),
-    meta: { requiresAuth: true }  // Route protegee
+    meta: { requiresAuth: true }
   },
   {
     path: '/tickets/new',
@@ -18,7 +19,6 @@ const routes = [
     component: () => import('../views/DetailTicketView.vue'),
     meta: { requiresAuth: true }
   },
-
   {
   path: '/admin/utilisateurs',
   component: () => import('../views/AdminUsers.vue'),
@@ -29,19 +29,26 @@ const routes = [
   component: () => import('../views/DashboardView.vue'),
   meta: { requiresAuth: true, roles: ['admin', 'responsable'] }
 },
+{
+  path: '/definir-mot-de-passe/:token',
+  component: () => import('../views/Definirmotdepasse.vue')
+}
 ];
-const router = createRouter({ history: createWebHistory(), routes });
-// Guard global : vérifier avant chaque navigation
-router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
-  if (to.meta.requiresAuth && !authStore.estConnecte) {
-    next('/login'); // Pas connecte : rediriger vers login
-  } else if (to.meta.roles && !to.meta.roles.includes(authStore.user?.role)) {
-    next('/kanban'); // Mauvais role : rediriger vers kanban
-  } else {
-    next(); // OK : laisser passer
-  }
-});
 
+const router = createRouter({ history: createWebHistory(), routes });
+
+router.beforeEach((to, from) => {
+  const authStore = useAuthStore();
+
+  if (to.meta.requiresAuth && !authStore.estConnecte) {
+    return '/login';
+  }
+
+  if (to.meta.roles && !to.meta.roles.includes(authStore.user?.role)) {
+    return '/kanban';
+  }
+
+  return true;
+});
 
 export default router; 
