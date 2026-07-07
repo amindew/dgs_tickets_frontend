@@ -31,8 +31,7 @@ export const useNotificationsStore = defineStore('notifications', {
     connecter(userId) {
       if (this.socket) return;
 
-      this.socket = io(import.meta.env.VITE_API_URL);
-
+      this.socket = io(import.meta.env.VITE_API_URL.replace('/api', ''));
       this.socket.on('connect', () => {
         console.log('✅ WebSocket connecté');
         this.connecte = true;
