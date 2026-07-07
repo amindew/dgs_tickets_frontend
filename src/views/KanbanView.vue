@@ -51,7 +51,7 @@
               
               <div
   class="carte"
-  ::class="[
+  :class="[
   niveauSLA(element, statut),
   {
     'carte-critique-retard':
