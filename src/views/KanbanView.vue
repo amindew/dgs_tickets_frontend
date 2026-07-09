@@ -217,7 +217,7 @@ import { useTicketsStore } from '../stores/tickets';
 import { useAuthStore }    from '../stores/auth';
 import BarreFiltres        from '../components/Kanban/BarreFiltres.vue';
 import api; 
-import { couleurUtilisateur, initiales } from '../utils/avatar';            from '../services/api';
+import { couleurUtilisateur, initiales } from '../utils/avatar';            
 
 const props = defineProps({
   drawerOuvert: { type: Boolean, default: false },
