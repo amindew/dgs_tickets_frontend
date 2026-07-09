@@ -216,7 +216,7 @@ import draggable from 'vuedraggable';
 import { useTicketsStore } from '../stores/tickets';
 import { useAuthStore }    from '../stores/auth';
 import BarreFiltres        from '../components/Kanban/BarreFiltres.vue';
-import api     
+import api; 
 import { couleurUtilisateur, initiales } from '../utils/avatar';            from '../services/api';
 
 const props = defineProps({
