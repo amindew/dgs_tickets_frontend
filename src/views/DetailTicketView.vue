@@ -16,10 +16,7 @@
 
         <div class="infos-grid">
           <div><label>Client</label><p>{{ ticket.client_nom }}</p></div>
-           <div>
-    <label>Téléphone</label>
-    <p>{{ ticket.client_telephone }}</p>
-  </div>
+    
 
 
           <div><label>Téléphone client</label><p>{{ ticket.client_telephone || '—' }}</p></div>
