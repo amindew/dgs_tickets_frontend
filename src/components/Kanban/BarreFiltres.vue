@@ -254,6 +254,7 @@ onMounted(async () => {
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: transform 0.1s, border-color 0.15s; outline: none;
   overflow: hidden;
+  padding: 0;
 }
 .avatar:hover { transform: scale(1.1); }
 .avatar.selectionne { border-color: var(--navy); box-shadow: 0 0 0 2px white inset; }

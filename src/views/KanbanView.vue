@@ -103,7 +103,8 @@
                 <div class="carte-pied">
                   <div v-if="element.assigne" class="carte-assigne">
                     <div class="avatar-xs" :style="{ background: couleurUtilisateur(element.assigne?.id) }">
-                      {{ initiales(element.assigne?.nom) }}
+                      <img v-if="element.assigne?.photo_url" :src="urlPhoto(element.assigne.photo_url)" class="avatar-img" />
+                      <span v-else>{{ initiales(element.assigne?.nom) }}</span>
                     </div>
                     <span class="assigne-nom">{{ element.assigne.nom }}</span>
                     <button
@@ -173,8 +174,9 @@
               :class="{ selectionne: techChoisi === tech.id }"
               @click="techChoisi = tech.id"
             >
-              <div class="tech-avatar" :style="{ background: couleurUser({ id: tech.id }) }">
-                {{ tech.nom.slice(0, 2).toUpperCase() }}
+              <div class="tech-avatar" :style="{ background: couleurUtilisateur(tech.id) }">
+                <img v-if="tech.photo_url" :src="urlPhoto(tech.photo_url)" class="avatar-img" />
+                <span v-else>{{ initiales(tech.nom) }}</span>
               </div>
               <span class="tech-nom">{{ tech.nom }}</span>
               <svg v-if="techChoisi === tech.id" class="check" width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -216,8 +218,8 @@ import draggable from 'vuedraggable';
 import { useTicketsStore } from '../stores/tickets';
 import { useAuthStore }    from '../stores/auth';
 import BarreFiltres        from '../components/Kanban/BarreFiltres.vue';
-import api   from '../services/api'; 
-import { couleurUtilisateur, initiales } from '../utils/avatar';            
+import api, { urlPhoto }   from '../services/api';
+import { couleurUtilisateur, initiales } from '../utils/avatar';
 
 const props = defineProps({
   drawerOuvert: { type: Boolean, default: false },
@@ -263,20 +265,6 @@ const labelsPriorite = {
   normale:  'Normale',
   basse:    'Basse',
 };
-
-// ── Couleurs avatars ──────────────────────────────────────────────────────
-const palette = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#a855f7'];
-
-function hashId(id) {
-  if (!id) return 0;
-  return String(id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-}
-
-function couleurUser(user) {
-  if (!user?.id) return '#1e293b';
-  return palette[hashId(user.id) % palette.length];
-}
-
 
 function formaterDate(iso) {
   if (!iso) return '';
@@ -546,7 +534,9 @@ onUnmounted(() => {
   width: 22px; height: 22px; border-radius: 50%; color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 8px; font-weight: 600; flex-shrink: 0;
+  overflow: hidden;
 }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .assigne-nom { font-size: 11px; color: var(--ink-soft); }
 .btn-changer-assign {
   background: none; border: none; cursor: pointer; color: var(--ink-soft);
@@ -608,6 +598,7 @@ onUnmounted(() => {
   width: 32px; height: 32px; border-radius: 50%; color: white;
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  overflow: hidden;
 }
 .tech-nom  { flex: 1; font-size: 13px; font-weight: 500; color: var(--ink); }
 .check     { color: var(--accent); flex-shrink: 0; }
