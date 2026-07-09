@@ -21,8 +21,9 @@
           </div>
 
           <div class="bulle-header">
-            <div class="avatar-mini" :style="{ background: couleur(c.auteur?.nom) }">
-              {{ initiale(c.auteur?.nom) }}
+            <div class="avatar-mini" :style="{ background: couleurUtilisateur(c.auteur?.id) }">
+              <img v-if="c.auteur?.photo_url" :src="urlPhoto(c.auteur.photo_url)" class="avatar-img" />
+              <span v-else>{{ initiales(c.auteur?.nom) }}</span>
             </div>
             <span class="auteur">{{ c.auteur?.nom }}</span>
             <span class="role-badge" :class="c.auteur?.role">{{ c.auteur?.role }}</span>
@@ -60,8 +61,9 @@
     <!-- Zone de saisie -->
     <div class="saisie">
       <div class="saisie-inner">
-        <div class="avatar-mini moi" :style="{ background: couleur(authStore.user?.nom) }">
-          {{ initiale(authStore.user?.nom) }}
+        <div class="avatar-mini moi" :style="{ background: couleurUtilisateur(authStore.user?.id) }">
+          <img v-if="authStore.user?.photo_url" :src="urlPhoto(authStore.user.photo_url)" class="avatar-img" />
+          <span v-else>{{ initiales(authStore.user?.nom) }}</span>
         </div>
         <textarea
           ref="textareaRef"
@@ -100,7 +102,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useAuthStore } from '../../stores/auth';
-import api from '../../services/api';
+import api, { urlPhoto } from '../../services/api';
+import { couleurUtilisateur, initiales } from '../../utils/avatar';
 
 const props = defineProps({ ticketId: String });
 const authStore = useAuthStore();
@@ -112,18 +115,6 @@ const reponseA             = ref(null);
 const commentaireASupprimmer = ref(null);
 const listeRef             = ref(null);
 const textareaRef          = ref(null);
-
-const palette = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#a855f7', '#0f172a'];
-
-function initiale(nom) {
-  return nom ? nom.trim().charAt(0).toUpperCase() : '?';
-}
-
-function couleur(nom) {
-  if (!nom) return '#1e293b';
-  const hash = nom.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return palette[hash % palette.length];
-}
 
 function formatDate(date) {
   return new Date(date).toLocaleString('fr-FR', {
@@ -185,7 +176,6 @@ async function envoyer() {
 
     const res = await api.post(`/tickets/${props.ticketId}/commentaires`, body);
 
-    // Ajouter immédiatement sans attendre WebSocket
     commentaires.value.push(res.data.data);
     texte.value = '';
     reponseA.value = null;
@@ -202,11 +192,9 @@ async function envoyer() {
   }
 }
 
-// Écouter les commentaires des autres en temps réel
 function onNouveauCommentaire(event) {
   const data = event.detail;
   if (data?.ticket_id === props.ticketId) {
-    // Ne pas ajouter si c'est déjà dans la liste (envoyé par nous)
     const existe = commentaires.value.find(c => c.id === data.commentaire?.id);
     if (!existe && data.commentaire) {
       commentaires.value.push(data.commentaire);
@@ -310,9 +298,10 @@ onUnmounted(() => {
   width: 18px; height: 18px; border-radius: 50%;
   color: white; font-size: 9px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 0; overflow: hidden;
 }
 .avatar-mini.moi { width: 28px; height: 28px; font-size: 12px; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 .auteur { font-size: 12px; font-weight: 600; color: var(--ink); }
 .date   { font-size: 10px; color: var(--ink-soft); margin-left: auto; }

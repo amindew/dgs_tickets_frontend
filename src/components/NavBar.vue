@@ -50,7 +50,11 @@
             class="avatar-nav"
             :style="{ backgroundImage: `url(${urlPhoto(authStore.user.photo_url)})` }"
           ></span>
-          <span v-else class="avatar-nav avatar-nav-initiales">{{ initiales(authStore.user?.nom) }}</span>
+          <span
+            v-else
+            class="avatar-nav avatar-nav-initiales"
+            :style="{ backgroundColor: couleurUtilisateur(authStore.user?.id) }"
+          >{{ initiales(authStore.user?.nom) }}</span>
           <span class="user-name">{{ authStore.user?.nom }}</span>
           <span class="user-role">{{ authStore.user?.role }}</span>
         </router-link>
@@ -77,7 +81,11 @@
             class="avatar-nav avatar-menu"
             :style="{ backgroundImage: `url(${urlPhoto(authStore.user.photo_url)})` }"
           ></span>
-          <span v-else class="avatar-nav avatar-menu avatar-nav-initiales">{{ initiales(authStore.user?.nom) }}</span>
+          <span
+            v-else
+            class="avatar-nav avatar-menu avatar-nav-initiales"
+            :style="{ backgroundColor: couleurUtilisateur(authStore.user?.id) }"
+          >{{ initiales(authStore.user?.nom) }}</span>
           <span class="menu-nom">{{ authStore.user?.nom }}</span>
           <span class="menu-role">{{ authStore.user?.role }}</span>
         </router-link>
@@ -116,6 +124,7 @@ import { useAuthStore } from '../stores/auth';
 import { useRouter, useRoute } from 'vue-router';
 import ClocheNotifications from './ClocheNotifications.vue';
 import { urlPhoto } from '../services/api';
+import { couleurUtilisateur, initiales } from '../utils/avatar';
 
 const authStore  = useAuthStore();
 const router     = useRouter();
@@ -132,11 +141,6 @@ function deconnecter() {
   menuOuvert.value = false;
   authStore.seDeconnecter();
   router.push('/login');
-}
-
-function initiales(nom) {
-  if (!nom) return '?';
-  return nom.slice(0, 2).toUpperCase();
 }
 </script>
 
@@ -234,7 +238,7 @@ function initiales(nom) {
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 700; color: white;
 }
-.avatar-nav-initiales { background-color: var(--accent); }
+.avatar-nav-initiales { /* couleur injectée dynamiquement en inline style */ }
 .avatar-menu { width: 34px; height: 34px; font-size: 12px; }
 .menu-user { text-decoration: none; color: inherit; }
 

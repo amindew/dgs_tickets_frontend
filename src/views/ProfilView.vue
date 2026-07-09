@@ -8,7 +8,7 @@
         <h2 class="section-titre">Photo de profil</h2>
 
         <div class="photo-zone">
-          <div class="avatar-preview">
+          <div class="avatar-preview" :style="{ backgroundColor: couleurUtilisateur(authStore.user?.id) }">
             <img v-if="apercuPhoto" :src="apercuPhoto" alt="Aperçu" />
             <img v-else-if="authStore.user?.photo_url" :src="urlPhoto(authStore.user.photo_url)" alt="Photo actuelle" />
             <span v-else class="avatar-initiales">{{ initiales(authStore.user?.nom) }}</span>
@@ -25,6 +25,14 @@
               @click="envoyerPhoto"
             >
               {{ uploadEnCours ? 'Envoi...' : 'Enregistrer la photo' }}
+            </button>
+            <button
+              v-if="authStore.user?.photo_url"
+              class="btn-supprimer-photo"
+              :disabled="suppressionEnCours"
+              @click="supprimerPhoto"
+            >
+              {{ suppressionEnCours ? 'Suppression...' : 'Supprimer la photo' }}
             </button>
           </div>
         </div>
@@ -69,20 +77,17 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import api, { urlPhoto } from '../services/api';
+import { couleurUtilisateur, initiales } from '../utils/avatar';
 
 const authStore = useAuthStore();
 
 // ── Photo ──────────────────────────────────────────────────────────────────
-const fichierChoisi = ref(null);
-const apercuPhoto    = ref(null);
-const uploadEnCours  = ref(false);
-const erreurPhoto    = ref('');
-const succesPhoto    = ref('');
-
-function initiales(nom) {
-  if (!nom) return '?';
-  return nom.slice(0, 2).toUpperCase();
-}
+const fichierChoisi     = ref(null);
+const apercuPhoto       = ref(null);
+const uploadEnCours     = ref(false);
+const suppressionEnCours = ref(false);
+const erreurPhoto       = ref('');
+const succesPhoto       = ref('');
 
 function onFichierChoisi(e) {
   const fichier = e.target.files[0];
@@ -116,6 +121,22 @@ async function envoyerPhoto() {
     erreurPhoto.value = e.response?.data?.message || "Erreur lors de l'envoi de la photo";
   } finally {
     uploadEnCours.value = false;
+  }
+}
+
+async function supprimerPhoto() {
+  suppressionEnCours.value = true;
+  erreurPhoto.value = '';
+  succesPhoto.value = '';
+
+  try {
+    await api.delete('/users/photo');
+    authStore.mettreAJourPhoto(null);
+    succesPhoto.value = 'Photo de profil supprimée';
+  } catch (e) {
+    erreurPhoto.value = e.response?.data?.message || 'Erreur lors de la suppression de la photo';
+  } finally {
+    suppressionEnCours.value = false;
   }
 }
 
@@ -206,7 +227,6 @@ async function changerMotDePasse() {
   height: 72px;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,6 +276,19 @@ async function changerMotDePasse() {
 }
 .btn-envoyer:hover:not(:disabled) { background: #ea580c; }
 .btn-envoyer:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-supprimer-photo {
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-supprimer-photo:hover:not(:disabled) { background: var(--danger-soft); }
+.btn-supprimer-photo:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .form-mdp {
   display: flex;

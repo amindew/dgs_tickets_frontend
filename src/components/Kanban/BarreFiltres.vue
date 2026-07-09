@@ -65,11 +65,12 @@
           :key="tech.id"
           class="avatar"
           :class="{ selectionne: filtres.agents.includes(tech.id) }"
-          :style="{ background: couleurAvatar(tech) }"
+          :style="{ background: couleurUtilisateur(tech.id) }"
           :title="tech.nom"
           @click="toggleTechnicien(tech.id)"
         >
-          {{ initiales(tech.nom) }}
+          <img v-if="tech.photo_url" :src="urlPhoto(tech.photo_url)" class="avatar-img" />
+          <span v-else>{{ initiales(tech.nom) }}</span>
         </button>
       </div>
       <!-- Noms des techniciens sélectionnés -->
@@ -114,11 +115,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '../../services/api'
+import api, { urlPhoto } from '../../services/api'
+import { couleurUtilisateur, initiales } from '../../utils/avatar'
 
 const emit = defineEmits(['filtrer'])
 const techniciens = ref([])
-const palette = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#1e293b', '#06b6d4']
 
 const filtres = ref({
   priorite: '',
@@ -149,12 +150,6 @@ function toggleTechnicien(id) {
   else
     filtres.value.agents.splice(index, 1)
 
-  console.log('AGENTS SELECTIONNES =', filtres.value.agents)
-  console.log(
-  'FILTRES =',
-  JSON.stringify(filtres.value, null, 2)
-)
-
   emettreFiltres()
 }
 
@@ -176,19 +171,6 @@ function toggleEcheanceSemaine() {
     filtres.value.date_fin   = ''
   }
   emettreFiltres()
-}
-
-function initiales(nom) {
-  if (!nom) return '?'
-  return nom.split(' ').map(m => m[0]).join('').slice(0, 2).toUpperCase()
-}
-
-// Même palette qu'dans KanbanView
-const palettee = ['#3b7dd8', '#10b981', '#f97316', '#8b5cf6', '#ef4444', '#a855f7']
-
-function couleurAvatar(tech) {
-  const hash = String(tech.id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return palette[hash % palette.length]
 }
 
 function nomTechnicien(id) {
@@ -271,9 +253,11 @@ onMounted(async () => {
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: transform 0.1s, border-color 0.15s; outline: none;
+  overflow: hidden;
 }
 .avatar:hover { transform: scale(1.1); }
 .avatar.selectionne { border-color: var(--navy); box-shadow: 0 0 0 2px white inset; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 /* Tags agents sélectionnés */
 .agents-selectionnes { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }

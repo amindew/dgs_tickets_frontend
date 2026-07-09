@@ -102,8 +102,8 @@
 
                 <div class="carte-pied">
                   <div v-if="element.assigne" class="carte-assigne">
-                    <div class="avatar-xs" :style="{ background: couleurUser(element.assigne) }">
-                      {{ initiales(element.assigne) }}
+                    <div class="avatar-xs" :style="{ background: couleurUtilisateur(element.assigne?.id) }">
+                      {{ initiales(element.assigne?.nom) }}
                     </div>
                     <span class="assigne-nom">{{ element.assigne.nom }}</span>
                     <button
@@ -216,7 +216,8 @@ import draggable from 'vuedraggable';
 import { useTicketsStore } from '../stores/tickets';
 import { useAuthStore }    from '../stores/auth';
 import BarreFiltres        from '../components/Kanban/BarreFiltres.vue';
-import api                 from '../services/api';
+import api     
+import { couleurUtilisateur, initiales } from '../utils/avatar';            from '../services/api';
 
 const props = defineProps({
   drawerOuvert: { type: Boolean, default: false },
