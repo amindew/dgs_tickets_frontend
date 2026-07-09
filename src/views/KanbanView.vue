@@ -277,10 +277,6 @@ function couleurUser(user) {
   return palette[hashId(user.id) % palette.length];
 }
 
-function initiales(user) {
-  if (!user) return '?';
-  return user.nom?.slice(0, 2).toUpperCase() || '?';
-}
 
 function formaterDate(iso) {
   if (!iso) return '';
