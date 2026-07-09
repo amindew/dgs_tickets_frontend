@@ -8,4 +8,11 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+export function urlPhoto(chemin) {
+  if (!chemin) return null;
+  const base = import.meta.env.VITE_API_URL.replace('/api', '');
+  return `${base}${chemin}`;
+}
+
 export default api;

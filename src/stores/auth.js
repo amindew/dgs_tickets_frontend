@@ -19,21 +19,24 @@ export const useAuthStore = defineStore('auth', {
     async seConnecter(email, mot_de_passe) {
       const res = await api.post('/auth/login', { email, mot_de_passe });
 
-      const { token, role, nom, id } = res.data.data;
+      const { token, role, nom, id, photo_url } = res.data.data;
 
       this.token = token;
-      this.user = { id, role, nom };
+      this.user = { id, role, nom, photo_url };
 
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({ id, role, nom }));
+      localStorage.setItem('user', JSON.stringify({ id, role, nom, photo_url }));
 
-      // Connexion WebSocket
       const notifStore = useNotificationsStore();
       notifStore.connecter(id);
     },
 
+    mettreAJourPhoto(photo_url) {
+      this.user = { ...this.user, photo_url };
+      localStorage.setItem('user', JSON.stringify(this.user));
+    },
+
     seDeconnecter() {
-      // Déconnexion WebSocket
       const notifStore = useNotificationsStore();
       notifStore.deconnecter();
 

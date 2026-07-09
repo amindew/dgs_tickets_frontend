@@ -44,8 +44,16 @@
       <!-- Droite -->
       <div class="navbar-right">
         <ClocheNotifications />
-        <span class="user-name desktop-only">{{ authStore.user?.nom }}</span>
-        <span class="user-role desktop-only">{{ authStore.user?.role }}</span>
+        <router-link to="/profil" class="user-mini desktop-only" title="Mon profil">
+          <span
+            v-if="authStore.user?.photo_url"
+            class="avatar-nav"
+            :style="{ backgroundImage: `url(${urlPhoto(authStore.user.photo_url)})` }"
+          ></span>
+          <span v-else class="avatar-nav avatar-nav-initiales">{{ initiales(authStore.user?.nom) }}</span>
+          <span class="user-name">{{ authStore.user?.nom }}</span>
+          <span class="user-role">{{ authStore.user?.role }}</span>
+        </router-link>
         <button class="btn-deconnexion desktop-only" @click="deconnecter">Déconnexion</button>
 
         <!-- Burger mobile -->
@@ -63,10 +71,16 @@
     <!-- Menu mobile déroulant -->
     <transition name="menu-slide">
       <div v-if="menuOuvert" class="menu-mobile">
-        <div class="menu-user">
+        <router-link to="/profil" class="menu-user" @click="menuOuvert = false">
+          <span
+            v-if="authStore.user?.photo_url"
+            class="avatar-nav avatar-menu"
+            :style="{ backgroundImage: `url(${urlPhoto(authStore.user.photo_url)})` }"
+          ></span>
+          <span v-else class="avatar-nav avatar-menu avatar-nav-initiales">{{ initiales(authStore.user?.nom) }}</span>
           <span class="menu-nom">{{ authStore.user?.nom }}</span>
           <span class="menu-role">{{ authStore.user?.role }}</span>
-        </div>
+        </router-link>
         <router-link to="/kanban" @click="menuOuvert = false">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
           Tableau Kanban
@@ -83,6 +97,10 @@
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2 13c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
           Utilisateurs
         </router-link>
+        <router-link to="/profil" @click="menuOuvert = false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Mon profil
+        </router-link>
         <button class="menu-deconnexion" @click="deconnecter">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Déconnexion
@@ -97,6 +115,7 @@ import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter, useRoute } from 'vue-router';
 import ClocheNotifications from './ClocheNotifications.vue';
+import { urlPhoto } from '../services/api';
 
 const authStore  = useAuthStore();
 const router     = useRouter();
@@ -113,6 +132,11 @@ function deconnecter() {
   menuOuvert.value = false;
   authStore.seDeconnecter();
   router.push('/login');
+}
+
+function initiales(nom) {
+  if (!nom) return '?';
+  return nom.slice(0, 2).toUpperCase();
 }
 </script>
 
@@ -197,6 +221,23 @@ function deconnecter() {
 }
 .btn-deconnexion:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
 
+/* Avatar utilisateur (navbar + menu mobile) */
+.user-mini {
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none; padding: 4px 8px; border-radius: 8px;
+  transition: background 0.15s;
+}
+.user-mini:hover { background: rgba(255,255,255,0.08); }
+.avatar-nav {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: white;
+}
+.avatar-nav-initiales { background-color: var(--accent); }
+.avatar-menu { width: 34px; height: 34px; font-size: 12px; }
+.menu-user { text-decoration: none; color: inherit; }
+
 /* Burger */
 .btn-burger {
   background: none; border: none; cursor: pointer;
@@ -224,7 +265,7 @@ function deconnecter() {
 .menu-mobile button:hover { background: rgba(255,255,255,0.06); color: white; }
 .menu-mobile a.router-link-active { color: white; border-left: 3px solid var(--accent); }
 .menu-user {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 10px;
   padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .menu-nom { font-size: 14px; font-weight: 600; color: white; }

@@ -32,6 +32,11 @@ const routes = [
 {
   path: '/definir-mot-de-passe/:token',
   component: () => import('../views/Definirmotdepasse.vue')
+},
+{
+  path: '/profil',
+  component: () => import('../views/ProfilView.vue'),
+  meta: { requiresAuth: true }
 }
 ];
 
