@@ -129,6 +129,17 @@
                   <span v-else class="non-assigne">Non assigné</span>
 
                   <span v-if="element.client_nom" class="carte-client">{{ element.client_nom }}</span>
+
+                  <button
+                    v-if="authStore.estAdmin || authStore.estResponsable"
+                    class="btn-supprimer-ticket"
+                    title="Supprimer le ticket"
+                    @click.stop="demanderSuppressionTicket(element)"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </template>
@@ -201,6 +212,23 @@
       </div>
     </transition>
 
+    <!-- Modale confirmation suppression ticket -->
+    <transition name="modal">
+      <div v-if="ticketASupprimer" class="modal-overlay" @click.self="ticketASupprimer = null">
+        <div class="modal-confirm card-surface">
+          <p class="modal-confirm-titre">Supprimer ce ticket ?</p>
+          <p class="modal-confirm-extrait">{{ ticketASupprimer.reference }} — {{ ticketASupprimer.titre }}</p>
+          <p class="modal-confirm-warning">Cette action est définitive et supprimera aussi les commentaires et pièces jointes associés.</p>
+          <div class="modal-footer">
+            <button class="btn-annuler" @click="ticketASupprimer = null">Annuler</button>
+            <button class="btn-confirmer-suppression" :disabled="suppressionTicketEnCours" @click="confirmerSuppressionTicket">
+              {{ suppressionTicketEnCours ? 'Suppression...' : 'Supprimer définitivement' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <transition name="toast">
       <div v-if="erreurTransition" class="toast-erreur">{{ erreurTransition }}</div>
     </transition>
@@ -239,6 +267,8 @@ const techChoisi         = ref(null);
 const chargementTechs    = ref(false);
 const assignEnCours      = ref(false);
 const erreurAssign       = ref('');
+const ticketASupprimer      = ref(null);
+const suppressionTicketEnCours = ref(false);
 let erreurTimer = null;
 let toastTimer  = null;
 const maintenant = ref(Date.now());
@@ -408,6 +438,28 @@ function afficherToast(msg) {
   toastTimer = setTimeout(() => { toastSucces.value = ''; }, 3000);
 }
 
+// ── Suppression de ticket ─────────────────────────────────────────────────
+function demanderSuppressionTicket(ticket) {
+  ticketASupprimer.value = ticket;
+}
+
+async function confirmerSuppressionTicket() {
+  if (!ticketASupprimer.value) return;
+  suppressionTicketEnCours.value = true;
+  try {
+    await api.delete(`/tickets/${ticketASupprimer.value.id}`);
+    ticketASupprimer.value = null;
+    afficherToast('Ticket supprimé avec succès');
+    await store.chargerTickets();
+  } catch (e) {
+    erreurTransition.value = e.response?.data?.message || 'Erreur lors de la suppression';
+    clearTimeout(erreurTimer);
+    erreurTimer = setTimeout(() => { erreurTransition.value = ''; }, 4000);
+  } finally {
+    suppressionTicketEnCours.value = false;
+  }
+}
+
 // ── Clavier ───────────────────────────────────────────────────────────────
 function onKeydown(e) {
   if (e.key === 'Escape') {
@@ -556,6 +608,26 @@ onUnmounted(() => {
   font-size: 10px; color: var(--ink-soft);
   max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+.btn-supprimer-ticket {
+  background: none; border: none; cursor: pointer; color: var(--ink-soft);
+  padding: 3px; border-radius: 4px; display: flex; align-items: center;
+  opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+  margin-left: auto;
+}
+.carte:hover .btn-supprimer-ticket { opacity: 1; }
+.btn-supprimer-ticket:hover { color: var(--danger); background: var(--danger-soft); }
+
+.modal-confirm { width: 100%; max-width: 380px; padding: 22px; border-radius: var(--radius-md); }
+.modal-confirm-titre { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.modal-confirm-extrait { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
+.modal-confirm-warning { font-size: 12px; color: var(--danger); background: var(--danger-soft); padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; }
+.btn-confirmer-suppression {
+  background: var(--danger); color: white; border: none;
+  border-radius: 10px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-confirmer-suppression:hover:not(:disabled) { background: #b91c1c; }
+.btn-confirmer-suppression:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .vide {
   display: flex; flex-direction: column; align-items: center;
