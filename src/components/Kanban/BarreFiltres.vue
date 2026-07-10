@@ -2,18 +2,20 @@
   <div class="panneau-filtres">
 
     <div class="panneau-header">
-      <span class="titre">FILTRES</span>
-      <div class="actions-header">
-        <button class="btn-lien" @click="sauvegarderFiltre">Enregistrer</button>
-        <button class="btn-lien rouge" @click="reinitialiser">Effacer</button>
+      <div class="header-titre-ligne">
+        <span class="titre">FILTRES</span>
+        <span v-if="nombreFiltresActifs > 0" class="badge-actifs">
+          {{ nombreFiltresActifs }} filtre{{ nombreFiltresActifs > 1 ? 's' : '' }} actif{{ nombreFiltresActifs > 1 ? 's' : '' }}
+        </span>
       </div>
+      <button class="btn-lien rouge" @click="reinitialiser">Effacer</button>
     </div>
 
     <!-- QUICK FILTERS -->
     <div class="quick-filtres">
       <button
         class="quick-filtre"
-        :class="{ actif: filtres.priorite === 'critique' }"
+        :class="{ actif: filtres.priorite.includes('critique') }"
         @click="toggleQuickFiltre('priorite', 'critique')"
       >
         <span class="chip-dot" style="background:#ef4444"></span>
@@ -29,11 +31,19 @@
       </button>
       <button
         class="quick-filtre"
-        :class="{ actif: filtres.statut === 'resolu' }"
+        :class="{ actif: filtres.statut.includes('resolu') }"
         @click="toggleQuickFiltre('statut', 'resolu')"
       >
         <span class="chip-dot" style="background:#10b981"></span>
         Tickets terminés
+      </button>
+      <button
+        class="quick-filtre"
+        :class="{ actif: filtres.sla_depasse }"
+        @click="toggleSlaDepasse"
+      >
+        <span class="chip-dot" style="background:#dc2626"></span>
+        SLA dépassé
       </button>
     </div>
 
@@ -55,13 +65,49 @@
       </div>
     </div>
 
+    <div class="separateur"></div>
+
+    <!-- STATUT -->
+    <div class="section">
+      <span class="section-titre">Statut</span>
+      <div class="checkbox-liste">
+        <label v-for="s in optionsStatut" :key="s.value" class="checkbox-item">
+          <input type="checkbox" :value="s.value" v-model="filtres.statut" @change="emettreFiltres" />
+          {{ s.label }}
+        </label>
+      </div>
+    </div>
+
+    <!-- PRIORITÉ -->
+    <div class="section">
+      <span class="section-titre">Priorité</span>
+      <div class="checkbox-liste">
+        <label v-for="p in optionsPriorite" :key="p.value" class="checkbox-item">
+          <input type="checkbox" :value="p.value" v-model="filtres.priorite" @change="emettreFiltres" />
+          {{ p.label }}
+        </label>
+      </div>
+    </div>
+
+    <div class="separateur"></div>
+
     <!-- TECHNICIENS -->
     <div class="section">
       <span class="section-titre">Technicien</span>
+
+      <input
+        v-if="techniciens.length > 4"
+        type="text"
+        v-model="rechercheTech"
+        placeholder="Rechercher un technicien..."
+        class="input-recherche-tech"
+      />
+
       <div v-if="techniciens.length === 0" class="no-tech">Aucun technicien</div>
+      <div v-else-if="techniciensFiltres.length === 0" class="no-tech">Aucun résultat</div>
       <div v-else class="avatars-grille">
         <button
-          v-for="tech in techniciens"
+          v-for="tech in techniciensFiltres"
           :key="tech.id"
           class="avatar"
           :class="{ selectionne: filtres.agents.includes(tech.id) }"
@@ -88,17 +134,6 @@
 
     <div class="separateur"></div>
 
-    <!-- PRIORITÉ -->
-    <div class="section">
-      <span class="section-titre">Priorité</span>
-      <select v-model="filtres.priorite" @change="emettreFiltres">
-        <option value="">Toutes priorités</option>
-        <option value="critique">Critique</option>
-        <option value="moyenne">Moyenne</option>
-        <option value="basse">Basse</option>
-      </select>
-    </div>
-
     <!-- CLIENT -->
     <div class="section">
       <span class="section-titre">Client</span>
@@ -110,24 +145,49 @@
       />
     </div>
 
+    <div class="separateur"></div>
+
+    <!-- COMPTEUR RÉSULTATS -->
+    <div class="compteur-resultats">
+      {{ nombreResultats }} ticket{{ nombreResultats > 1 ? 's' : '' }} correspond{{ nombreResultats > 1 ? 'ent' : '' }}
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api, { urlPhoto } from '../../services/api'
 import { couleurUtilisateur, initiales } from '../../utils/avatar'
+import { useTicketsStore } from '../../stores/tickets'
 
 const emit = defineEmits(['filtrer'])
 const techniciens = ref([])
+const rechercheTech = ref('')
+
+const ticketsStore = useTicketsStore()
+
+const optionsStatut = [
+  { value: 'a_faire',  label: 'À faire' },
+  { value: 'en_cours', label: 'En cours' },
+  { value: 'bloque',   label: 'Bloqué' },
+  { value: 'resolu',   label: 'Résolu' },
+]
+
+const optionsPriorite = [
+  { value: 'critique', label: 'Critique' },
+  { value: 'moyenne',  label: 'Moyenne' },
+  { value: 'basse',    label: 'Basse' },
+]
 
 const filtres = ref({
-  priorite: '',
+  priorite: [],
+  statut: [],
   agents: [],
   client: '',
-  statut: '',
   date_debut: '',
-  date_fin: ''
+  date_fin: '',
+  sla_depasse: false,
 })
 
 const filtreSemaineActif = ref(false)
@@ -153,8 +213,12 @@ function toggleTechnicien(id) {
   emettreFiltres()
 }
 
+// Toggle générique pour les quick filters priorité/statut :
+// bascule la valeur dans le tableau correspondant (même tableau que les cases à cocher)
 function toggleQuickFiltre(champ, valeur) {
-  filtres.value[champ] = filtres.value[champ] === valeur ? '' : valeur
+  const index = filtres.value[champ].indexOf(valeur)
+  if (index === -1) filtres.value[champ].push(valeur)
+  else filtres.value[champ].splice(index, 1)
   emettreFiltres()
 }
 
@@ -173,19 +237,51 @@ function toggleEcheanceSemaine() {
   emettreFiltres()
 }
 
+function toggleSlaDepasse() {
+  filtres.value.sla_depasse = !filtres.value.sla_depasse
+  emettreFiltres()
+}
+
 function nomTechnicien(id) {
   return techniciens.value.find(t => t.id === id)?.nom || `#${id}`
 }
 
-function sauvegarderFiltre() {
-  console.log('Filtre sauvegardé', filtres.value)
-}
-
 function reinitialiser() {
-  filtres.value = { priorite: '', agents: [], client: '', statut: '', date_debut: '', date_fin: '' }
+  filtres.value = {
+    priorite: [],
+    statut: [],
+    agents: [],
+    client: '',
+    date_debut: '',
+    date_fin: '',
+    sla_depasse: false,
+  }
   filtreSemaineActif.value = false
+  rechercheTech.value = ''
   emettreFiltres()
 }
+
+const techniciensFiltres = computed(() => {
+  if (!rechercheTech.value.trim()) return techniciens.value
+  const q = rechercheTech.value.toLowerCase()
+  return techniciens.value.filter(t => t.nom.toLowerCase().includes(q))
+})
+
+const nombreFiltresActifs = computed(() => {
+  let n = 0
+  if (filtres.value.priorite.length > 0) n++
+  if (filtres.value.statut.length > 0) n++
+  if (filtres.value.agents.length > 0) n++
+  if (filtres.value.client) n++
+  if (filtres.value.date_debut || filtres.value.date_fin) n++
+  if (filtres.value.sla_depasse) n++
+  return n
+})
+
+const nombreResultats = computed(() => {
+  const t = ticketsStore.tickets
+  return (t.a_faire?.length || 0) + (t.en_cours?.length || 0) + (t.bloque?.length || 0) + (t.resolu?.length || 0)
+})
 
 onMounted(async () => {
   try {
@@ -203,9 +299,13 @@ onMounted(async () => {
   padding: 16px 14px 24px; font-size: 13px; color: var(--ink);
 }
 
-.panneau-header { display: flex; align-items: center; justify-content: space-between; }
+.panneau-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.header-titre-ligne { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .titre { font-weight: 700; font-size: 11px; letter-spacing: 0.07em; color: var(--ink-soft); text-transform: uppercase; }
-.actions-header { display: flex; gap: 10px; }
+.badge-actifs {
+  font-size: 10px; font-weight: 600; color: var(--accent);
+  background: var(--accent-soft); padding: 2px 8px; border-radius: 99px;
+}
 .btn-lien { background: none; border: none; font-size: 12px; cursor: pointer; padding: 0; color: var(--navy); font-weight: 500; }
 .btn-lien:hover { text-decoration: underline; }
 .btn-lien.rouge { color: var(--danger); }
@@ -235,6 +335,17 @@ onMounted(async () => {
 .section select:focus,
 .section input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
 
+.checkbox-liste { display: flex; flex-direction: column; gap: 6px; }
+.checkbox-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--ink); cursor: pointer;
+}
+.checkbox-item input[type="checkbox"] {
+  width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer;
+}
+
+.input-recherche-tech { margin-bottom: 4px; }
+
 .date-range { display: flex; align-items: flex-end; gap: 6px; }
 .champ-date { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .champ-date label { font-size: 10px; color: var(--ink-soft); font-weight: 500; }
@@ -253,8 +364,7 @@ onMounted(async () => {
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: transform 0.1s, border-color 0.15s; outline: none;
-  overflow: hidden;
-  padding: 0;
+  overflow: hidden; padding: 0;
 }
 .avatar:hover { transform: scale(1.1); }
 .avatar.selectionne { border-color: var(--navy); box-shadow: 0 0 0 2px white inset; }
@@ -276,4 +386,10 @@ onMounted(async () => {
 .tag-remove:hover { color: white; }
 
 .no-tech { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+
+.compteur-resultats {
+  font-size: 12px; font-weight: 600; color: var(--ink-soft);
+  background: var(--bg); border-radius: 8px; padding: 8px 10px;
+  text-align: center;
+}
 </style>
