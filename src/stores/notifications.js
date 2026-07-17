@@ -46,6 +46,12 @@ export const useNotificationsStore = defineStore('notifications', {
         // on retombe sur un id temporaire pour ne pas planter l'affichage,
         // mais "marquer comme lue" ne pourra pas fonctionner pour cette
         // notif tant que le vrai id n'est pas là.
+        
+        console.log(
+      "NOTIFICATION RECUE PAR FRONT",
+      data
+    );
+        
         const id = data.id ?? `temp-${Date.now()}`;
 
         // Évite les doublons si un rechargement (charger()) a déjà
