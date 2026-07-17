@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { ticketService } from '../../services/ticketService';
 import api, { urlPhoto } from '../../services/api';
 import { useAuthStore } from '../../stores/auth';
@@ -126,6 +126,14 @@ const FORMATS = [
 
 async function charger() {
   pieces.value = await ticketService.getPieces(props.ticketId);
+}
+
+function onNouvellePieceJointe(event) {
+  const data = event.detail;
+  if (data?.ticket_id === props.ticketId && data.piece) {
+    const existe = pieces.value.find(p => p.id === data.piece.id);
+    if (!existe) pieces.value.push(data.piece);
+  }
 }
 
 function ouvrirSelecteur() {
@@ -213,7 +221,14 @@ function formaterDate(date) {
   });
 }
 
-onMounted(charger);
+onMounted(() => {
+  charger();
+  window.addEventListener('nouvellePieceJointe', onNouvellePieceJointe);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('nouvellePieceJointe', onNouvellePieceJointe);
+});
 </script>
 
 <style scoped>

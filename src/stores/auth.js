@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('user', JSON.stringify({ id, role, nom, photo_url }));
 
       const notifStore = useNotificationsStore();
-      notifStore.connecter(id);
+      notifStore.connecter(token);
     },
 
     mettreAJourPhoto(photo_url) {

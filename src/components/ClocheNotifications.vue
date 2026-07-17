@@ -88,15 +88,19 @@ function formatNotification(n) {
     return `Statut modifié : ${n.ancien_statut} → ${n.nouveau_statut}`;
   }
 
-  if (n.type === 'nouveau_commentaire') {
+  if (n.type === 'nouveau_commentaire' || n.type === 'commentaire') {
     return `💬 Nouveau commentaire`;
   }
 
-  if (n.type === 'nouvelle_piece_jointe') {
-    return `📎 Fichier ajouté : ${n.nom_fichier}`;
+  if (n.type === 'nouvelle_piece_jointe' || n.type === 'piece_jointe') {
+    return n.nom_fichier ? `📎 Fichier ajouté : ${n.nom_fichier}` : (n.message || `📎 Nouvelle pièce jointe`);
   }
 
-  return 'Nouvelle notification';
+  if (n.type === 'assignation') {
+    return `🎫 Ticket assigné : ${n.reference || n.titre || ''}`.trim();
+  }
+
+  return n.message || 'Nouvelle notification';
 }
 
 // 🔥 CLICK → REDIRECTION + MARQUER LU

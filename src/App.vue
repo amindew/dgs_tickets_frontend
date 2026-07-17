@@ -44,8 +44,8 @@ function toggleDark() {
 
 // Reconnecter le WebSocket après un refresh de page
 onMounted(() => {
-  if (authStore.estConnecte && authStore.user?.id) {
-    notifStore.connecter(authStore.user.id);
+  if (authStore.estConnecte && authStore.token) {
+    notifStore.connecter(authStore.token);
   }
 
   // Restaurer la préférence dark mode

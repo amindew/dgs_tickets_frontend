@@ -19,21 +19,31 @@ export const useNotificationsStore = defineStore('notifications', {
     async charger() {
       try {
         const res = await api.get('/notifications');
-        this.notifications = res.data.data;
+        const depuisApi = res.data.data.map(n => ({ ...n, date: n.createdAt }));
+
+        // Fusionne avec ce qui est déjà là plutôt que d'écraser, pour ne pas
+        // perdre une notification reçue en direct pendant que cette requête
+        // était en vol
+        const idsApi = new Set(depuisApi.map(n => n.id));
+        const enAttente = this.notifications.filter(n => !idsApi.has(n.id));
+
+        this.notifications = [...enAttente, ...depuisApi]
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
       } catch (e) {
         console.error('Erreur chargement notifications :', e);
       }
     },
 
     // Connexion WebSocket
-    connecter(userId) {
+    connecter(token) {
       if (this.socket) return;
 
-      this.socket = io(import.meta.env.VITE_API_URL.replace('/api', ''));
+      this.socket = io(import.meta.env.VITE_API_URL.replace('/api', ''), {
+        auth: { token },
+      });
 
       this.socket.on('connect', () => {
         this.connecte = true;
-        this.socket.emit('rejoindre', userId);
         // Charger les notifications existantes depuis la BDD
         this.charger();
       });
@@ -46,12 +56,6 @@ export const useNotificationsStore = defineStore('notifications', {
         // on retombe sur un id temporaire pour ne pas planter l'affichage,
         // mais "marquer comme lue" ne pourra pas fonctionner pour cette
         // notif tant que le vrai id n'est pas là.
-        
-        console.log(
-      "NOTIFICATION RECUE PAR FRONT",
-      data
-    );
-        
         const id = data.id ?? `temp-${Date.now()}`;
 
         // Évite les doublons si un rechargement (charger()) a déjà
@@ -59,11 +63,21 @@ export const useNotificationsStore = defineStore('notifications', {
         if (this.notifications.some(n => n.id === id)) return;
 
         this.notifications.unshift({
-          id,
-          lue:        false,
-          date_envoi: new Date().toISOString(),
+          lue: false,
           ...data,
+          id,
+          date: data.date || new Date().toISOString(),
         });
+      });
+
+      // Relaye les mises à jour temps réel d'un ticket ouvert vers les
+      // composants concernés (fil de commentaires, pièces jointes)
+      this.socket.on('commentaire_ajoute', (data) => {
+        window.dispatchEvent(new CustomEvent('nouveauCommentaire', { detail: data }));
+      });
+
+      this.socket.on('piece_jointe_ajoutee', (data) => {
+        window.dispatchEvent(new CustomEvent('nouvellePieceJointe', { detail: data }));
       });
 
       this.socket.on('disconnect', () => {
