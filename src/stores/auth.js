@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', {
     initialiser() {
       if (this.estConnecte && this.user?.id) {
         const notifStore = useNotificationsStore();
-        notifStore.connecter(this.user.id);
+        notifStore.connecter(this.token);
       }
     },
 
@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('user', JSON.stringify({ id, role, nom, photo_url }));
 
       const notifStore = useNotificationsStore();
-      notifStore.connecter(id);
+      notifStore.connecter(token);
     },
 
     mettreAJourPhoto(photo_url) {
