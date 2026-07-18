@@ -16,6 +16,16 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    // À appeler une fois au démarrage de l'app (main.js / App.vue onMounted)
+    // pour reconnecter le socket si l'utilisateur était déjà connecté
+    // (token présent en localStorage après un rechargement de page).
+    initialiser() {
+      if (this.estConnecte && this.user?.id) {
+        const notifStore = useNotificationsStore();
+        notifStore.connecter(this.user.id);
+      }
+    },
+
     async seConnecter(email, mot_de_passe) {
       const res = await api.post('/auth/login', { email, mot_de_passe });
 
@@ -28,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('user', JSON.stringify({ id, role, nom, photo_url }));
 
       const notifStore = useNotificationsStore();
-      notifStore.connecter(token);
+      notifStore.connecter(id);
     },
 
     mettreAJourPhoto(photo_url) {
