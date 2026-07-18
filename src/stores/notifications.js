@@ -19,7 +19,11 @@ export const useNotificationsStore = defineStore('notifications', {
     async charger() {
       try {
         const res = await api.get('/notifications');
-        const depuisApi = res.data.data.map(n => ({ ...n, date: n.createdAt }));
+        const depuisApi = res.data.data.map(n => ({
+          ...n,
+          reference: n.ticket?.reference,
+          date: n.createdAt,
+        }));
 
         // Fusionne avec ce qui est déjà là plutôt que d'écraser, pour ne pas
         // perdre une notification reçue en direct pendant que cette requête

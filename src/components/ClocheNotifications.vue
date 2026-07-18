@@ -85,7 +85,10 @@ function formaterDate(iso) {
 // 🔥 FORMAT INTELLIGENT
 function formatNotification(n) {
   if (n.type === 'statut_change') {
-    return `Statut modifié : ${n.ancien_statut} → ${n.nouveau_statut}`;
+    if (n.ancien_statut && n.nouveau_statut) {
+      return `Statut modifié : ${n.ancien_statut} → ${n.nouveau_statut}`;
+    }
+    return n.message || 'Statut modifié';
   }
 
   if (n.type === 'nouveau_commentaire' || n.type === 'commentaire') {
