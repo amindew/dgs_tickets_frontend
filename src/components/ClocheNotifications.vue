@@ -42,6 +42,10 @@
               <span class="notif-texte">
                 {{ formatNotification(n) }}
               </span>
+
+              <span v-if="n.auteur_nom" class="notif-auteur">
+                {{ n.auteur_nom }}
+              </span>
             </div>
 
             <div class="notif-date">
@@ -235,6 +239,12 @@ onUnmounted(() => {
 .notif-texte {
   font-size: 12px;
   color: #374151;
+}
+
+.notif-auteur {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .notif-date {
