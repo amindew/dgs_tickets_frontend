@@ -248,6 +248,7 @@ import { useAuthStore }    from '../stores/auth';
 import BarreFiltres        from '../components/Kanban/BarreFiltres.vue';
 import api, { urlPhoto }   from '../services/api';
 import { couleurUtilisateur, initiales } from '../utils/avatar';
+import { formaterDuree } from '../utils/duree';
 
 const props = defineProps({
   drawerOuvert: { type: Boolean, default: false },
@@ -336,29 +337,11 @@ function texteSLA(ticket, statut) {
   const diff =
     new Date(ticket.sla_echeance).getTime() - maintenant.value;
 
-  if (diff <= 0) {
-    const retard = Math.floor(Math.abs(diff) / 60000);
+  const minutesTotal = Math.floor(Math.abs(diff) / 60000);
 
-    if (retard < 60) {
-      return `⚠ Dépassé de ${retard} min`;
-    }
-
-    const heures = Math.floor(retard / 60);
-    const minutes = retard % 60;
-
-    return `⚠ Dépassé de ${heures}h ${minutes}min`;
-  }
-
-  const minutes = Math.floor(diff / 60000);
-
-  if (minutes >= 60) {
-    const heures = Math.floor(minutes / 60);
-    const reste = minutes % 60;
-
-    return `⏳ ${heures}h ${reste}min`;
-  }
-
-  return `⏳ ${minutes} min`;
+  return diff <= 0
+    ? `⚠ Dépassé de ${formaterDuree(minutesTotal)}`
+    : `⏳ ${formaterDuree(minutesTotal)}`;
 }
 
 function appliquerFiltres(filtres) {

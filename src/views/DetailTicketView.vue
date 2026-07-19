@@ -49,8 +49,8 @@
       <div v-if="sla" class="sla-bloc" :class="{ depasse: sla.depasse }">
         <h3>Indicateur SLA</h3>
         <div class="sla-infos">
-          <span>Durée écoulée : {{ sla.duree_actuelle_min }} min</span>
-          <span>Seuil : {{ sla.seuil_min }} min</span>
+          <span>Durée écoulée : {{ formaterDuree(sla.duree_actuelle_min) }}</span>
+          <span>Seuil : {{ formaterDuree(sla.seuil_min) }}</span>
         </div>
         <div class="barre-sla">
           <div class="barre-fill" :style="{ width: sla.pourcentage + '%', background: sla.depasse ? '#dc2626' : '#16a34a' }"></div>
@@ -108,6 +108,7 @@ import api, { urlPhoto } from '../services/api';
 import FilCommentaires from '../components/tickets/FilCommentaires.vue';
 import ZoneUpload from '../components/tickets/ZoneUpload.vue';
 import { couleurUtilisateur, initiales } from '../utils/avatar';
+import { formaterDuree } from '../utils/duree';
 
 const route      = useRoute();
 const ticket     = ref(null);

@@ -106,6 +106,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
+import { formaterDuree } from '../utils/duree';
 
 const router      = useRouter();
 const kpi         = ref(null);
@@ -179,14 +180,6 @@ function fermerListe() {
 function voirTicket(id) {
   fermerListe();
   router.push(`/tickets/${id}`);
-}
-
-function formaterDuree(minutes) {
-  if (!minutes) return '0 min';
-  if (minutes < 60) return `${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
 
 function largeurBarre(valeur) {
