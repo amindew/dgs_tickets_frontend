@@ -305,26 +305,21 @@ function estCritiqueEnRetard(ticket) {
 
   if (ticket.assigne) return false;
 
-  const dateCreation =
-    ticket.createdAt ||
-    ticket.created_at ||
-    ticket.date_creation;
-
-  if (!dateCreation) return false;
+  if (!ticket.ouvert_le) return false;
 
   const diffMinutes =
-    (Date.now() - new Date(dateCreation).getTime()) / 60000;
+    (maintenant.value - new Date(ticket.ouvert_le).getTime()) / 60000;
 
   return diffMinutes >= 15;
 }
 function niveauSLA(ticket, statut) {
-  if (!ticket.date_limite_resolution) return "";
+  if (!ticket.sla_echeance) return "";
 
   // Les tickets déjà résolus n'ont pas d'alerte SLA
   if (statut === "resolu") return "";
 
   const diff =
-    new Date(ticket.date_limite_resolution).getTime() - Date.now();
+    new Date(ticket.sla_echeance).getTime() - maintenant.value;
 
   if (diff <= 0) return "carte-sla-depasse";
   if (diff <= 15 * 60 * 1000) return "carte-sla-15";
@@ -334,12 +329,12 @@ function niveauSLA(ticket, statut) {
   return "";
 }
 function texteSLA(ticket, statut) {
-  if (!ticket.date_limite_resolution) return "";
+  if (!ticket.sla_echeance) return "";
 
   if (statut === "resolu") return "";
 
   const diff =
-    new Date(ticket.date_limite_resolution).getTime() - maintenant.value;
+    new Date(ticket.sla_echeance).getTime() - maintenant.value;
 
   if (diff <= 0) {
     const retard = Math.floor(Math.abs(diff) / 60000);
