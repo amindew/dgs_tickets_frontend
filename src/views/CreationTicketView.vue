@@ -241,7 +241,7 @@ onMounted(async () => {
 .actions { display: flex; gap: 12px; margin-top: 6px; }
 .actions .btn { flex: 1; }
 
-@media (max-width: 480px) {
+@media (max-width: 1024px) {
   .grille-2 { grid-template-columns: 1fr; }
 }
 input:disabled {

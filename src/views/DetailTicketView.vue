@@ -247,7 +247,7 @@ h2 { font-size: 20px; font-weight: 700; color: var(--ink); margin: 6px 0 10px; }
 .chargement-page { text-align: center; padding: 60px; color: var(--ink-soft); }
 
 /* Mobile */
-@media (max-width: 600px) {
+@media (max-width: 1024px) {
   .page { padding: 16px 12px 40px; }
   .card-surface { padding: 16px; }
   h2 { font-size: 17px; }

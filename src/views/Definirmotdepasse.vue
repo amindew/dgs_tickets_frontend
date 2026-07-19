@@ -228,7 +228,7 @@ async function soumettre() {
 .centre h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 .centre p  { font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; }
 
-@media (max-width: 480px) {
+@media (max-width: 1024px) {
   .card { padding: 24px 16px; }
 }
 </style>

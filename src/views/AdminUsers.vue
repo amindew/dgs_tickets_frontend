@@ -431,7 +431,7 @@ onMounted(charger)
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 700px) {
+@media (max-width: 1024px) {
   .admin-page { padding: 16px 12px; }
   .admin-titre { font-size: 17px; }
 

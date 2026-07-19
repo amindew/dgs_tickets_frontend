@@ -721,7 +721,7 @@ onUnmounted(() => {
 
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .kanban-contenu { padding: 12px 10px; overflow-x: auto; }
   .colonnes {
     flex-direction: row; flex-wrap: nowrap; gap: 10px;

@@ -287,7 +287,7 @@ function deconnecter() {
 .desktop-only { display: flex !important; }
 .mobile-only  { display: none !important; }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .desktop-only { display: none !important; }
   .mobile-only  { display: flex !important; }
   .filtre-label { display: none; }

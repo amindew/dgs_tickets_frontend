@@ -439,7 +439,7 @@ onUnmounted(() => {
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 
 /* Mobile */
-@media (max-width: 600px) {
+@media (max-width: 1024px) {
   .bulle { max-width: 90%; }
   .aide-clavier { margin-left: 38px; }
 }

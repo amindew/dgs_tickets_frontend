@@ -346,7 +346,7 @@ onMounted(async () => {
 .barre-val { font-size: 11px; font-weight: 600; color: var(--ink); width: 22px; flex-shrink: 0; }
 
 /* Responsive */
-@media (max-width: 700px) {
+@media (max-width: 1024px) {
   .dashboard { padding: 16px 12px; }
   .kpi-grille { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .kpi-valeur { font-size: 24px; }
