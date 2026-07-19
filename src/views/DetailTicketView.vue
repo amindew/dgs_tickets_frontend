@@ -21,8 +21,26 @@
 
           <div><label>Téléphone client</label><p>{{ ticket.client_telephone || '—' }}</p></div>
 
-          <div><label>Assigné à</label><p>{{ ticket.assigne?.nom || 'Non assigné' }}</p></div>
-          <div><label>Créé par</label><p>{{ ticket.createur?.nom || 'Inconnu' }}</p></div>
+          <div>
+            <label>Assigné à</label>
+            <div class="personne">
+              <div v-if="ticket.assigne" class="avatar-personne" :style="{ background: couleurUtilisateur(ticket.assigne.id) }">
+                <img v-if="ticket.assigne.photo_url" :src="urlPhoto(ticket.assigne.photo_url)" class="avatar-img" />
+                <span v-else>{{ initiales(ticket.assigne.nom) }}</span>
+              </div>
+              <p>{{ ticket.assigne?.nom || 'Non assigné' }}</p>
+            </div>
+          </div>
+          <div>
+            <label>Créé par</label>
+            <div class="personne">
+              <div v-if="ticket.createur" class="avatar-personne" :style="{ background: couleurUtilisateur(ticket.createur.id) }">
+                <img v-if="ticket.createur.photo_url" :src="urlPhoto(ticket.createur.photo_url)" class="avatar-img" />
+                <span v-else>{{ initiales(ticket.createur.nom) }}</span>
+              </div>
+              <p>{{ ticket.createur?.nom || 'Inconnu' }}</p>
+            </div>
+          </div>
           <div><label>Ouvert le</label><p>{{ formatDate(ticket.ouvert_le) }}</p></div>
         </div>
       </div>
@@ -86,9 +104,10 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { ticketService } from '../services/ticketService';
-import api from '../services/api';
+import api, { urlPhoto } from '../services/api';
 import FilCommentaires from '../components/tickets/FilCommentaires.vue';
 import ZoneUpload from '../components/tickets/ZoneUpload.vue';
+import { couleurUtilisateur, initiales } from '../utils/avatar';
 
 const route      = useRoute();
 const ticket     = ref(null);
@@ -168,6 +187,14 @@ h2 { font-size: 20px; font-weight: 700; color: var(--ink); margin: 6px 0 10px; }
 }
 .infos-grid label { font-size: 11px; color: var(--ink-soft); display: block; margin-bottom: 2px; }
 .infos-grid p { font-size: 13px; font-weight: 500; color: var(--ink); margin: 0; }
+
+.personne { display: flex; align-items: center; gap: 8px; }
+.avatar-personne {
+  width: 24px; height: 24px; border-radius: 50%; color: white;
+  font-size: 10px; font-weight: 700; flex-shrink: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.avatar-personne .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 /* SLA */
 .sla-bloc { background: #f0fdf4; border-radius: 12px; padding: 16px; border: 1px solid #bbf7d0; }

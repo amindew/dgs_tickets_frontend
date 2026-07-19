@@ -12,11 +12,11 @@
  
     <div v-else>
       <div class="kpi-grille">
-        <div class="kpi-carte bleu">
+        <div class="kpi-carte bleu cliquable" @click="ouvrirListe('ouverts')">
           <span class="kpi-valeur">{{ kpi.tickets_ouverts }}</span>
           <span class="kpi-label">Tickets ouverts</span>
         </div>
-        <div class="kpi-carte vert">
+        <div class="kpi-carte vert cliquable" @click="ouvrirListe('resolus')">
           <span class="kpi-valeur">{{ kpi.tickets_resolus }}</span>
           <span class="kpi-label">Tickets résolus</span>
         </div>
@@ -24,17 +24,21 @@
           <span class="kpi-valeur">{{ formaterDuree(kpi.temps_moyen_resolution_min) }}</span>
           <span class="kpi-label">Temps moyen résolution</span>
         </div>
-        <div class="kpi-carte rouge">
+        <div class="kpi-carte rouge cliquable" @click="ouvrirListe('critiques_non_assignes')">
           <span class="kpi-valeur">{{ kpi.critiques_non_assignes }}</span>
           <span class="kpi-label">Critiques non assignés</span>
         </div>
-        <div class="kpi-carte violet">
+        <div class="kpi-carte violet cliquable" @click="ouvrirListe('bloques')">
           <span class="kpi-valeur">{{ kpi.tickets_bloques }}</span>
           <span class="kpi-label">Tickets bloqués</span>
         </div>
         <div class="kpi-carte gris">
           <span class="kpi-valeur">{{ kpi.taux_resolution_pct }}%</span>
           <span class="kpi-label">Taux de résolution</span>
+        </div>
+        <div class="kpi-carte noir cliquable" @click="ouvrirListe('supprimes')">
+          <span class="kpi-valeur">{{ kpi.tickets_supprimes }}</span>
+          <span class="kpi-label">Tickets supprimés</span>
         </div>
       </div>
 
@@ -66,19 +70,116 @@
         </div>
       </div>
     </div>
+
+    <!-- Modale drill-down : liste des tickets d'une categorie -->
+    <transition name="modal">
+      <div v-if="listeOuverte" class="modal-overlay" @click.self="fermerListe">
+        <div class="modal-liste card-surface">
+          <div class="modal-liste-header">
+            <h3>{{ listeTitre }}</h3>
+            <button class="btn-fermer" @click="fermerListe">×</button>
+          </div>
+
+          <div v-if="listeChargement" class="liste-chargement">Chargement...</div>
+          <div v-else-if="listeTickets.length === 0" class="liste-vide">Aucun ticket</div>
+          <div v-else class="liste-tickets">
+            <button
+              v-for="t in listeTickets"
+              :key="t.id"
+              class="ligne-ticket"
+              @click="voirTicket(t.id)"
+            >
+              <span class="ligne-ref">{{ t.reference }}</span>
+              <span class="ligne-titre">{{ t.titre }}</span>
+              <span :class="['tag', t.statut]">{{ labelsStatut[t.statut] || t.statut }}</span>
+              <span :class="['tag', t.priorite]">{{ t.priorite }}</span>
+              <span class="ligne-assigne">{{ t.assigne?.nom || 'Non assigné' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../services/api';
 
-const kpi        = ref(null);
-const chargement = ref(true);
+const router      = useRouter();
+const kpi         = ref(null);
+const chargement  = ref(true);
 
 const labelsStatut = {
   a_faire: 'À faire', en_cours: 'En cours', bloque: 'Bloqué', resolu: 'Résolu'
 };
+
+// ── Drill-down des tuiles KPI ────────────────────────────────────────────
+const listeOuverte     = ref(false);
+const listeTitre       = ref('');
+const listeChargement  = ref(false);
+const listeTickets     = ref([]);
+
+const TITRES_CATEGORIE = {
+  ouverts:                'Tickets ouverts',
+  resolus:                'Tickets résolus',
+  bloques:                'Tickets bloqués',
+  critiques_non_assignes: 'Critiques non assignés',
+  supprimes:              'Tickets supprimés',
+};
+
+function serialiserParams(params) {
+  const parts = [];
+  Object.entries(params).forEach(([key, val]) => {
+    if (Array.isArray(val)) {
+      val.forEach(v => { if (v) parts.push(`${key}[]=${encodeURIComponent(v)}`); });
+    } else if (val !== '' && val !== null && val !== undefined) {
+      parts.push(`${key}=${encodeURIComponent(val)}`);
+    }
+  });
+  return parts.join('&');
+}
+
+function paramsCategorie(categorie) {
+  switch (categorie) {
+    case 'resolus':   return { statut: ['resolu'] };
+    case 'bloques':    return { statut: ['bloque'] };
+    case 'critiques_non_assignes':
+      return { statut: ['a_faire', 'en_cours', 'bloque'], priorite: ['critique'], non_assigne: 'true' };
+    case 'supprimes': return { supprime: 'true' };
+    case 'ouverts':
+    default:          return { statut: ['a_faire', 'en_cours', 'bloque'] };
+  }
+}
+
+async function ouvrirListe(categorie) {
+  listeOuverte.value    = true;
+  listeTitre.value      = TITRES_CATEGORIE[categorie] || '';
+  listeChargement.value = true;
+  listeTickets.value    = [];
+
+  try {
+    const res = await api.get('/tickets', {
+      params: paramsCategorie(categorie),
+      paramsSerializer: serialiserParams,
+    });
+    listeTickets.value = Object.values(res.data.data).flat();
+  } catch (e) {
+    console.error('Erreur chargement liste tickets :', e);
+  } finally {
+    listeChargement.value = false;
+  }
+}
+
+function fermerListe() {
+  listeOuverte.value = false;
+}
+
+function voirTicket(id) {
+  fermerListe();
+  router.push(`/tickets/${id}`);
+}
 
 function formaterDuree(minutes) {
   if (!minutes) return '0 min';
@@ -158,9 +259,55 @@ onMounted(async () => {
 .kpi-carte.rouge  { background: #fee2e2; }
 .kpi-carte.violet { background: #ede9fe; }
 .kpi-carte.gris   { background: #f1f5f9; }
+.kpi-carte.noir   { background: #e2e8f0; }
+
+.kpi-carte.cliquable { cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; }
+.kpi-carte.cliquable:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(15,23,42,0.1); }
 
 .kpi-valeur { font-size: 32px; font-weight: 800; color: var(--ink); line-height: 1; }
 .kpi-label  { font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+
+/* Modale drill-down */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.45);
+  z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-liste {
+  background: white; width: 100%; max-width: 560px; max-height: 80vh;
+  border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+  overflow: hidden;
+}
+.modal-liste-header { display: flex; align-items: center; justify-content: space-between; }
+.modal-liste-header h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
+.btn-fermer {
+  background: none; border: none; cursor: pointer; font-size: 20px;
+  line-height: 1; color: var(--ink-soft); padding: 0 4px;
+}
+.liste-chargement, .liste-vide {
+  text-align: center; padding: 30px 0; color: var(--ink-soft); font-size: 13px;
+}
+.liste-tickets { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.ligne-ticket {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; cursor: pointer; text-align: left; transition: border-color 0.15s;
+}
+.ligne-ticket:hover { border-color: var(--accent); }
+.ligne-ref { font-size: 11px; color: var(--ink-soft); font-family: monospace; flex-shrink: 0; }
+.ligne-titre { font-size: 13px; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-assigne { font-size: 11px; color: var(--ink-soft); flex-shrink: 0; }
+
+.tag { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; text-transform: uppercase; flex-shrink: 0; }
+.tag.a_faire  { background: #e0f2fe; color: #0284c7; }
+.tag.en_cours { background: #fef9c3; color: #a16207; }
+.tag.bloque   { background: #fee2e2; color: #dc2626; }
+.tag.resolu   { background: #dcfce7; color: #16a34a; }
+.tag.critique { background: #fee2e2; color: #dc2626; }
+.tag.moyenne  { background: #ffedd5; color: #a16207; }
+.tag.basse    { background: #dcfce7; color: #16a34a; }
+
+.modal-enter-active, .modal-leave-active { transition: all 0.15s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
 
 /* Graphiques */
 .graphiques {

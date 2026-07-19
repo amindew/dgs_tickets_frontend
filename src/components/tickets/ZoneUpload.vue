@@ -8,35 +8,46 @@
         :key="p.id"
         class="piece"
       >
-        <span class="icone">📄</span>
+        <template v-if="p.supprime">
+          <span class="icone">🚫</span>
+          <div class="piece-info">
+            <span class="nom-supprime">
+              Pièce jointe supprimée par {{ p.suppresseur?.nom || 'un utilisateur' }}
+            </span>
+          </div>
+        </template>
 
-        <div class="piece-info">
-          <a
-            :href="urlComplete(p.url)"
-            target="_blank"
-            class="nom"
-          >
-            {{ p.nom_fichier }}
-          </a>
-          <span class="meta-upload">
-            {{ p.uploadeur?.nom || 'Utilisateur inconnu' }} · {{ formaterDate(p.createdAt) }}
+        <template v-else>
+          <span class="icone">📄</span>
+
+          <div class="piece-info">
+            <a
+              :href="urlComplete(p.url)"
+              target="_blank"
+              class="nom"
+            >
+              {{ p.nom_fichier }}
+            </a>
+            <span class="meta-upload">
+              {{ p.uploadeur?.nom || 'Utilisateur inconnu' }} · {{ formaterDate(p.createdAt) }}
+            </span>
+          </div>
+
+          <span class="taille">
+            {{ p.taille_ko }} Ko
           </span>
-        </div>
 
-        <span class="taille">
-          {{ p.taille_ko }} Ko
-        </span>
-
-        <button
-          v-if="p.uploade_par === authStore.user?.id"
-          class="btn-supprimer-piece"
-          title="Supprimer cette pièce jointe"
-          @click="demanderSuppression(p)"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+          <button
+            v-if="p.uploade_par === authStore.user?.id"
+            class="btn-supprimer-piece"
+            title="Supprimer cette pièce jointe"
+            @click="demanderSuppression(p)"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </template>
       </div>
     </div>
 
@@ -201,7 +212,13 @@ async function confirmerSuppression() {
 
   try {
     await api.delete(`/tickets/${props.ticketId}/pieces/${pieceASupprimer.value.id}`);
-    pieces.value = pieces.value.filter(p => p.id !== pieceASupprimer.value.id);
+    // Suppression douce : la piece reste dans la liste, affichee a la
+    // place comme "supprimee par X"
+    const cible = pieces.value.find(p => p.id === pieceASupprimer.value.id);
+    if (cible) {
+      cible.supprime = true;
+      cible.suppresseur = { nom: authStore.user?.nom };
+    }
     pieceASupprimer.value = null;
   } catch (e) {
     erreur.value = e.response?.data?.message || 'Erreur lors de la suppression';
@@ -271,6 +288,12 @@ onUnmounted(() => {
 .piece .nom {
   color: #2563eb;
   text-decoration: none;
+}
+
+.nom-supprime {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 .meta-upload {

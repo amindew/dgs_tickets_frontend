@@ -14,37 +14,45 @@
       >
         <div class="bulle" :class="{ 'bulle-propre': c.auteur_id === authStore.user?.id }">
 
-          <!-- Réponse citée -->
-          <div v-if="c.reponse_a" class="cite">
-            <span class="cite-auteur">{{ c.reponse_a.auteur?.nom }}</span>
-            <span class="cite-texte">{{ c.reponse_a.contenu }}</span>
-          </div>
+          <template v-if="c.supprime">
+            <p class="contenu-supprime">
+              🚫 Commentaire supprimé par {{ c.suppresseur?.nom || 'un utilisateur' }}
+            </p>
+          </template>
 
-          <div class="bulle-header">
-            <div class="avatar-mini" :style="{ background: couleurUtilisateur(c.auteur?.id) }">
-              <img v-if="c.auteur?.photo_url" :src="urlPhoto(c.auteur.photo_url)" class="avatar-img" />
-              <span v-else>{{ initiales(c.auteur?.nom) }}</span>
+          <template v-else>
+            <!-- Réponse citée -->
+            <div v-if="c.reponse_a" class="cite">
+              <span class="cite-auteur">{{ c.reponse_a.auteur?.nom }}</span>
+              <span class="cite-texte">{{ c.reponse_a.contenu }}</span>
             </div>
-            <span class="auteur">{{ c.auteur?.nom }}</span>
-            <span class="role-badge" :class="c.auteur?.role">{{ c.auteur?.role }}</span>
-            <span class="date">{{ formatDate(c.cree_le) }}</span>
-          </div>
 
-          <p class="contenu">{{ c.contenu }}</p>
+            <div class="bulle-header">
+              <div class="avatar-mini" :style="{ background: couleurUtilisateur(c.auteur?.id) }">
+                <img v-if="c.auteur?.photo_url" :src="urlPhoto(c.auteur.photo_url)" class="avatar-img" />
+                <span v-else>{{ initiales(c.auteur?.nom) }}</span>
+              </div>
+              <span class="auteur">{{ c.auteur?.nom }}</span>
+              <span class="role-badge" :class="c.auteur?.role">{{ c.auteur?.role }}</span>
+              <span class="date">{{ formatDate(c.cree_le) }}</span>
+            </div>
 
-          <!-- Actions -->
-          <div class="bulle-actions">
-            <button class="btn-action-inline" @click="repondreA(c)">
-              ↩ Répondre
-            </button>
-            <button
-              v-if="c.auteur_id === authStore.user?.id || authStore.estAdmin"
-              class="btn-action-inline rouge"
-              @click="confirmerSuppression(c)"
-            >
-              Supprimer
-            </button>
-          </div>
+            <p class="contenu">{{ c.contenu }}</p>
+
+            <!-- Actions -->
+            <div class="bulle-actions">
+              <button class="btn-action-inline" @click="repondreA(c)">
+                ↩ Répondre
+              </button>
+              <button
+                v-if="c.auteur_id === authStore.user?.id || authStore.estAdmin"
+                class="btn-action-inline rouge"
+                @click="confirmerSuppression(c)"
+              >
+                Supprimer
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -159,7 +167,13 @@ async function supprimer() {
   if (!commentaireASupprimmer.value) return;
   try {
     await api.delete(`/tickets/${props.ticketId}/commentaires/${commentaireASupprimmer.value.id}`);
-    commentaires.value = commentaires.value.filter(c => c.id !== commentaireASupprimmer.value.id);
+    // Suppression douce : le commentaire reste dans la liste, affiche a la
+    // place comme "supprime par X"
+    const cible = commentaires.value.find(c => c.id === commentaireASupprimmer.value.id);
+    if (cible) {
+      cible.supprime = true;
+      cible.suppresseur = { nom: authStore.user?.nom };
+    }
     commentaireASupprimmer.value = null;
   } catch (e) {
     alert('Erreur lors de la suppression');
@@ -176,7 +190,12 @@ async function envoyer() {
 
     const res = await api.post(`/tickets/${props.ticketId}/commentaires`, body);
 
-    commentaires.value.push(res.data.data);
+    // Si l'auteur est aussi le createur/assigne du ticket, l'echo temps reel
+    // (evenement "nouveauCommentaire") peut arriver avant la reponse de cet
+    // appel : on evite de l'ajouter une seconde fois.
+    if (!commentaires.value.find(c => c.id === res.data.data.id)) {
+      commentaires.value.push(res.data.data);
+    }
     texte.value = '';
     reponseA.value = null;
 
@@ -317,6 +336,11 @@ onUnmounted(() => {
 .contenu {
   font-size: 13px; color: var(--ink); margin: 0;
   line-height: 1.5; word-break: break-word;
+}
+
+.contenu-supprime {
+  font-size: 12px; color: var(--ink-soft); margin: 0;
+  font-style: italic;
 }
 
 /* Actions sur bulle */
